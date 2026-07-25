@@ -120,7 +120,7 @@ function transformRow(row: Record<string, string>, rowNumber: number, createdAt:
     destination: place(to, clean(row['Arr Terminal']), clean(row['Arr Gate'])),
     source: SOURCE,
     sourceId: clean(row['Flight Flighty ID']) || undefined,
-    operatingAirline: clean(row['Airline']).toUpperCase() || undefined,
+    operator: clean(row['Airline']).toUpperCase() || undefined,
     flightNumber: clean(row['Flight']) || undefined,
     registration: normaliseRegistration(clean(row['Tail Number'])) || undefined,
     aircraftType: clean(row['Aircraft Type Name']) || undefined,

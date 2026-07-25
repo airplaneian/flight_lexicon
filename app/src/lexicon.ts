@@ -20,11 +20,14 @@ export interface FlightRecord {
   destination?: Place
   source?: string
   sourceId?: string
-  operatingAirline?: string
+  callsign?: string
+  operator?: string
+  operatorName?: string
   flightNumber?: string
   marketingAirline?: string
   marketingFlightNumber?: string
   registration?: string
+  registeredOwner?: string
   aircraftType?: string
   icaoTypeDesignator?: string
   icao24?: string

@@ -106,3 +106,27 @@ test('batches writes and reports progress', async () => {
   assert.deepEqual(batches, [100, 100, 50])
   assert.deepEqual(progress, [100, 200, 250])
 })
+
+test('every schema field is claimed as owned, so none goes stale on update', async () => {
+  // OWNED_FIELDS is a set of string literals, which the compiler cannot check
+  // against FlightRecord. This guards the drift directly: a fully-populated
+  // record must have every one of its fields replaced by a merge, not carried
+  // over from the existing record.
+  const { OWNED_FIELDS } = await import('../src/repo.ts')
+  const populated: Record<string, unknown> = {
+    $type: FLIGHT_NSID, date: 'n', origin: 'n', destination: 'n', source: 'n', sourceId: 'n',
+    callsign: 'n', operator: 'n', operatorName: 'n', flightNumber: 'n',
+    marketingAirline: 'n', marketingFlightNumber: 'n',
+    registration: 'n', registeredOwner: 'n', aircraftType: 'n', icaoTypeDesignator: 'n', icao24: 'n',
+    scheduledGateDeparture: 'n', actualGateDeparture: 'n', scheduledTakeoff: 'n', actualTakeoff: 'n',
+    scheduledLanding: 'n', actualLanding: 'n', scheduledGateArrival: 'n', actualGateArrival: 'n',
+    relationship: 'n', seat: 'n', cabin: 'n', status: 'n', diversionAirport: 'n', notes: 'n',
+  }
+  const unowned = Object.keys(populated).filter((k) => !OWNED_FIELDS.has(k as never))
+  assert.deepEqual(unowned, [], 'fields missing from OWNED_FIELDS would never be updated')
+
+  const stale = Object.fromEntries(Object.keys(populated).map((k) => [k, 'stale']))
+  const merged = mergeRecord({ ...stale, createdAt: 'orig' }, { ...populated, createdAt: 'new' })
+  const notReplaced = Object.keys(populated).filter((k) => merged[k] === 'stale')
+  assert.deepEqual(notReplaced, [], 'these kept a stale value through a merge')
+})

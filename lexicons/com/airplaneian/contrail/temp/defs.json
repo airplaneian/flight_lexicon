@@ -4,7 +4,7 @@
   "defs": {
     "place": {
       "type": "object",
-      "description": "An airport, airfield, or landing site referenced by a flight record. Every field is optional, and absent always means unknown or not applicable -- never zero, empty, or a placeholder. A grass strip with no published identifier is a valid place carrying only 'name' and 'geo'; a major international airport may carry every field. Identifier fields should be written whenever they are known, because readers reconciling records of the same flight written by different people match on them. Prefer 'icao' as the primary identifier where a place has one, since IATA codes are reassigned over time and many airfields have no IATA code at all. Never invent, translate, or derive an identifier the source did not supply: an absent code is always better than a wrong one. This def describes a place only as far as a flight record needs to; it is not a general-purpose airport reference entry, and details about the world such as elevation, runway layout, or operating hours do not belong here.",
+      "description": "An airport, airfield, or landing site referenced by a flight record. Every field is optional, and absent always means unknown or not applicable, never empty or a placeholder. A grass strip with no published identifier is a valid place carrying only 'name' and 'geo', while a major airport may carry every field. Write the identifier fields wherever they are known, because readers reconciling records of the same flight written by different people match on them. Prefer 'icao' where a place has one, since IATA codes are reassigned over time and many airfields have no IATA code at all. Never invent, translate, or derive an identifier the source did not supply, because an absent code is better than a wrong one. This def describes a place only as far as a flight record needs to, and is not a general-purpose airport reference entry.",
       "properties": {
         "icao": {
           "type": "string",
@@ -13,7 +13,7 @@
         },
         "iata": {
           "type": "string",
-          "description": "IATA location code, three characters, uppercase. For example 'OAK'. Absent for the great majority of general aviation fields. Note that IATA codes are reassigned between airports over time, so a code alone does not identify a place across decades -- pair it with 'icao' or 'geo' where possible.",
+          "description": "IATA location code, three characters, uppercase. For example 'OAK'. Absent for the great majority of general aviation fields. Note that IATA codes are reassigned between airports over time, so a code alone does not identify a place across decades, and it should be paired with 'icao' or 'geo' where possible.",
           "maxLength": 8
         },
         "faaLid": {
@@ -23,17 +23,17 @@
         },
         "name": {
           "type": "string",
-          "description": "Free-text name of the place, for landing sites that no identifier system covers: grass strips, private fields, off-airport landings, water landings. Also useful as a human-readable label alongside a code. Carries no matching guarantees -- two records may name the same field differently.",
+          "description": "Free-text name of the place, for landing sites that no identifier system covers: grass strips, private fields, off-airport landings, water landings. Also useful as a human-readable label alongside a code. Carries no matching guarantees, since two records may name the same field differently.",
           "maxLength": 256
         },
         "geo": {
           "type": "ref",
           "ref": "community.lexicon.location.geo",
-          "description": "Coordinates of the place, for landing sites that no identifier system covers, or to disambiguate an ambiguous name. Note that the referenced def requires both latitude and longitude, expressed as decimal-degree strings referenced to WGS84 -- see the community.lexicon.location documentation for the coordinate conventions. Do not write coordinates that were merely looked up from an identifier already present in this object; that is reference data about the world, not an assertion about this flight."
+          "description": "Coordinates of the place, for landing sites that no identifier system covers, or to disambiguate an ambiguous name. Note that the referenced def requires both latitude and longitude, expressed as decimal-degree strings referenced to WGS84. See the community.lexicon.location documentation for the coordinate conventions. Do not write coordinates that were merely looked up from an identifier already present in this object, because that is reference data about the world rather than an assertion about this flight."
         },
         "terminal": {
           "type": "string",
-          "description": "Terminal used by this particular flight at this place, as free text -- terminal naming is entirely carrier- and airport-specific ('3', 'B', 'Main', 'INTL'). This describes how this flight was handled, not a property of the place itself, which is why it lives here rather than in any airport reference dataset.",
+          "description": "Terminal used by this particular flight at this place, as free text, since terminal naming is entirely carrier- and airport-specific ('3', 'B', 'Main', 'INTL'). This describes how this flight was handled rather than a property of the place itself, which is why it lives here rather than in any airport reference dataset.",
           "maxLength": 32
         },
         "gate": {

@@ -57,10 +57,17 @@
       <section>
         <h2>Records for every kind of flying</h2>
         <p>
-          Contrail is intended to accommodate commercial airline travel and general aviation
-          equally. A widebody operating a transpacific sector and a Super Cub flying circuits at a
-          grass strip are described by the same record type. The second has no flight number, no
-          airline, and no airport code, and it is still complete.
+          Contrail is intended to describe any kind of flying. Scheduled airline service and
+          general aviation are the most familiar examples, and they sit at roughly opposite ends of
+          how much structured information a flight carries, but they are not the limits of the
+          schema. Cargo, charter, business aviation, air ambulance, law enforcement, government,
+          military and flight training operations all use the same record type.
+        </p>
+        <p>
+          The difference between them is only which fields happen to apply. A cargo flight has an
+          operator and a flight number but no seat or cabin. A police helicopter may have nothing
+          beyond a registration, an aircraft type, and a takeoff and landing time. Both are
+          complete records, and so are the two below.
         </p>
         <div class="examples">
           <figure>
@@ -71,7 +78,7 @@
   "date": "2025-07-13",
   "origin": { "iata": "SFO", "terminal": "INTL", "gate": "A2" },
   "destination": { "iata": "LHR", "terminal": "3" },
-  "operatingAirline": "VIR",
+  "operator": "VIR",
   "flightNumber": "20",
   "marketingAirline": "DAL",
   "marketingFlightNumber": "5964",
@@ -138,7 +145,7 @@
           <tbody>
             <tr>
               <th scope="row">Commercial</th>
-              <td><code>date</code> + <code>operatingAirline</code> + <code>flightNumber</code></td>
+              <td><code>date</code> + <code>operator</code> + <code>flightNumber</code></td>
             </tr>
             <tr>
               <th scope="row">General aviation</th>
@@ -147,11 +154,40 @@
           </tbody>
         </table>
         <p>
-          The <code>operatingAirline</code> field takes the ICAO designator (<code>UAL</code>)
-          rather than the IATA code (<code>UA</code>). IATA airline codes are reassigned between
-          carriers over time, which makes a historical record tagged with one ambiguous.
-          Registrations are written in uppercase with no hyphens, so that <code>G-VBOW</code> and
-          <code>GVBOW</code> do not describe two different aircraft.
+          The <code>operator</code> field takes the ICAO designator of whoever actually flew the
+          aircraft, and is not restricted to airlines: <code>UAL</code> for an airline,
+          <code>FDX</code> for a cargo carrier, <code>RCH</code> for a military air mobility
+          flight. It is the ICAO designator rather than the IATA code (<code>UA</code>) because
+          IATA codes are reassigned between carriers over time, which makes a historical record
+          tagged with one ambiguous. Operators with no designator at all, which is most of general
+          aviation, go in <code>operatorName</code> instead. Registrations are written in uppercase
+          with no hyphens, so that <code>G-VBOW</code> and <code>GVBOW</code> do not describe two
+          different aircraft.
+        </p>
+      </section>
+
+      <section>
+        <h2>Working with surveillance data</h2>
+        <p>
+          The aircraft and operator fields are shaped to take ADS-B data without losing anything.
+          A surveillance feed supplies a Mode S address, a registration, an ICAO type designator, a
+          human-readable type description and a callsign, and each of those has a field of its own.
+        </p>
+        <p>
+          The callsign is written verbatim into <code>callsign</code> and is never decomposed on
+          the way in. <code>UAL38</code> and <code>FDX5608</code> split cleanly into an operator
+          and a flight number, so an importer can fill those as well. A general aviation aircraft
+          transmits its registration, and a state aircraft may transmit a bare word such as
+          <code>LEGACY</code>. Anything that cannot be split with certainty stays in
+          <code>callsign</code> alone.
+        </p>
+        <p>
+          Surveillance datasets usually expose a single combined owner-or-operator field, and in
+          practice its contents are the registrant rather than the operator. Much of the fleet is
+          registered to trusts and single-purpose holding companies, so a Pilatus PC-12 comes back
+          registered to a trust company and a Cessna 172 to an LLC named after its own tail number.
+          That value belongs in <code>registeredOwner</code>. Military and state aircraft usually
+          have no entry at all.
         </p>
       </section>
 
@@ -225,14 +261,7 @@
           >
           and resolve by NSID.
         </p>
-        <ul class="schemas">
-          <li><code>com.airplaneian.contrail.temp.flight</code>, the flight record itself</li>
-          <li><code>com.airplaneian.contrail.temp.trip</code>, which groups flights into a journey</li>
-          <li>
-            <code>com.airplaneian.contrail.temp.defs</code>, holding the shared
-            <code>place</code> definition
-          </li>
-        </ul>
+        <!--LEXICON_DEFINITIONS-->
         <p class="aside">
           These are currently published under a <code>temp</code> namespace while the shape
           settles. Published lexicon constraints can never be loosened afterwards, so the stable

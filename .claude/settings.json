@@ -51,7 +51,13 @@
       "Read(//Users/iservin/Documents/lexicons/com/airplaneian/contrail/**)",
       "Bash(python3 -)",
       "Bash(sed -i '' 's|class=\"wordmark\"|class=\"eyebrow\"|; s|class=\"standfirst\"|class=\"tagline\"|' index.html)",
-      "Bash(sed -i '' 's|<link rel=\"stylesheet\" href=\"/src/styles.css\" />|<meta name=\"theme-color\" content=\"#0a0a0a\" />\\\\n    <link rel=\"stylesheet\" href=\"/src/styles.css\" />|' index.html)"
+      "Bash(sed -i '' 's|<link rel=\"stylesheet\" href=\"/src/styles.css\" />|<meta name=\"theme-color\" content=\"#0a0a0a\" />\\\\n    <link rel=\"stylesheet\" href=\"/src/styles.css\" />|' index.html)",
+      "Bash(cd /Users/iservin/Documents/flight_lexicon/app && npm run build 2>&1 | grep -E \"✓ built|error\" *)",
+      "Read(//Users/iservin/Documents/lexicons/com/airplaneian/contrail/temp/**)",
+      "mcp__claude_ai_Spoor__query_adsb_tracks",
+      "Bash(python3 -c ' *)",
+      "Bash(xargs sed -i '' 's/operatingAirline/operator/g')",
+      "Bash(python3 -c \"import json,sys; print\\('trip records:', len\\(json.load\\(sys.stdin\\).get\\('records',[]\\)\\)\\)\")"
     ]
   }
 }

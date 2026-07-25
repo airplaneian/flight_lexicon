@@ -186,7 +186,7 @@ function flightRow(f: ParsedFlight): Node {
   })
 
   const r = f.record
-  const airline = [r.operatingAirline, r.flightNumber].filter(Boolean).join(' ')
+  const airline = [r.operator, r.flightNumber].filter(Boolean).join(' ')
   const route = `${(r.origin as { iata?: string })?.iata ?? '?'} → ${(r.destination as { iata?: string })?.iata ?? '?'}`
   const departs = (r.actualGateDeparture ?? r.scheduledGateDeparture ?? r.date ?? '') as string
 

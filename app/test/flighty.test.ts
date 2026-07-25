@@ -36,7 +36,7 @@ test('maps a complete row, giving every time an explicit offset', () => {
   assert.deepEqual(f.issues, [])
   assert.equal(f.record.$type, FLIGHT_NSID)
   assert.equal(f.record.date, '2025-07-13')
-  assert.equal(f.record.operatingAirline, 'VIR')
+  assert.equal(f.record.operator, 'VIR')
   assert.equal(f.record.flightNumber, '20', 'flight number stays a string')
   assert.deepEqual(f.record.origin, { iata: 'SFO', terminal: 'INTL', gate: 'A2' })
   assert.deepEqual(f.record.destination, { iata: 'LHR', terminal: '3' }, 'no empty gate key')

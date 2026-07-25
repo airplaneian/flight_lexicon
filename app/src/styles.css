@@ -69,14 +69,13 @@ h1 {
 
 .tagline {
   font-size: 1.0625rem;
-  color: var(--muted);
+  color: var(--prose);
   line-height: 1.55;
-  max-width: 480px;
 }
 
 .cta {
   margin-top: 1.5rem;
-  color: var(--muted);
+  color: var(--prose);
 }
 
 /* ── Prose ── */
@@ -216,22 +215,186 @@ figcaption {
   padding-right: 1.5rem;
 }
 
-.schemas {
-  list-style: none;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--border);
+/* ── Lexicon reference ── */
+
+.lexdoc {
+  margin-bottom: 1.5rem;
+}
+
+/* Tabs are radio inputs so the reference works without JavaScript. */
+.lexdoc > input[type='radio'] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lexdoc-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  gap: 0.375rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  scrollbar-width: thin;
+}
+
+.lexdoc-tabs label {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.875rem;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.lexdoc-tabs label:hover {
+  border-color: var(--border-h);
+  color: var(--text);
+}
+
+.lexdoc-panel {
+  display: none;
+}
+
+/* Nth radio checked reveals the nth panel and lights the nth tab. */
+.lexdoc > input:nth-of-type(1):checked ~ .lexdoc-panels > .lexdoc-panel:nth-of-type(1),
+.lexdoc > input:nth-of-type(2):checked ~ .lexdoc-panels > .lexdoc-panel:nth-of-type(2),
+.lexdoc > input:nth-of-type(3):checked ~ .lexdoc-panels > .lexdoc-panel:nth-of-type(3) {
+  display: block;
+}
+
+.lexdoc > input:nth-of-type(1):checked ~ .lexdoc-tabs label:nth-of-type(1),
+.lexdoc > input:nth-of-type(2):checked ~ .lexdoc-tabs label:nth-of-type(2),
+.lexdoc > input:nth-of-type(3):checked ~ .lexdoc-tabs label:nth-of-type(3) {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.35);
+  color: var(--accent);
+}
+
+.lexdoc > input:focus-visible ~ .lexdoc-tabs label {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lexdef + .lexdef {
+  margin-top: 2rem;
+}
+
+.lexdef-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.625rem;
+}
+
+.lexdef-head code {
+  background: none;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.lexkind {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.lexdef-desc {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.6;
   margin-bottom: 1rem;
 }
 
-.schemas li {
+/* Hairline stack, matching the platform cards in Easy ADS-B. */
+.lexfields {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lexfield {
   background: var(--surface);
-  padding: 0.875rem 1.375rem;
-  font-size: 0.9375rem;
-  color: var(--prose);
+  padding: 0.875rem 1.25rem;
+}
+
+.lexfield-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lexfield-name {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lextype,
+.lexreq {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.6875rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.lextype {
+  background: rgba(125, 180, 220, 0.12);
+  color: #7db4dc;
+}
+
+.lexreq {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+.lexconstraints {
+  margin-top: 0.3rem;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.lexknown {
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.lexknown-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 0.15rem;
+}
+
+.lexknown code {
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.lexdesc {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
 }
 
 /* ── Warning ── */
