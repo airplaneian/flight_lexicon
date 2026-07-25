@@ -297,17 +297,36 @@
       <section id="import">
         <h2>Flighty importer demo</h2>
         <p>
-          The demo below imports a <a href="https://flighty.com">Flighty</a> CSV export into your
-          repository as Contrail records. It runs entirely in this page. Your file is parsed in the
-          browser and is never uploaded, because there is no server to upload it to.
+          The demo below reads a <a href="https://flighty.com">Flighty</a> CSV export and turns it
+          into a list of flights to choose from. Your archive is treated as a set of candidates
+          rather than as a batch to upload. Nothing is written until you select something, and you
+          can pick a single flight, a handful, or the whole file if you want your full history on
+          your PDS.
+        </p>
+        <p>
+          Each flight can be edited before it is written, which is useful when the source data has
+          something wrong in it. Clearing a field removes it from the record entirely, since absent
+          means unknown.
+        </p>
+        <p>
+          It all runs in this page. Your file is parsed in the browser and is never uploaded,
+          because there is no server to upload it to.
         </p>
 
         <div class="warning" role="note">
-          <h3>Before you write anything</h3>
+          <h3>Choosing what to publish</h3>
           <p>
-            A complete flight history is also a movement history. Once these records are in your
-            repository they are public and permanent, and a reader can work out where you are
-            based, how often you travel, and when you are away from home.
+            Nothing is selected by default, and that is deliberate. A complete flight history is
+            also a movement history: taken together, these records show where you are based, how
+            often you travel, and when you are away from home. Any one flight discloses very little
+            of that. The whole set discloses most of it.
+          </p>
+          <p>
+            Selecting everything is one button away if that is what you want. It is worth deciding
+            on purpose rather than by default, because writing a record publishes it immediately.
+            You can delete records from your repository afterwards, and a deletion is broadcast the
+            same way a creation is, but you cannot recall copies that other services have already
+            taken. Treat publishing as the irreversible step, not storage.
           </p>
           <p>
             This holds regardless of what the records claim. The <code>relationship</code> field
@@ -315,6 +334,12 @@
             repository disclose your connection to those flights either way.
           </p>
         </div>
+
+        <p class="aside">
+          Contrail only ever creates and updates records. It does not delete them, and does not ask
+          for permission to, which is why the sign-in prompt says so. To remove records later,
+          <a href="https://pdsls.dev">pdsls.dev</a> can delete them from your repository.
+        </p>
 
         <div id="app">
           <noscript>

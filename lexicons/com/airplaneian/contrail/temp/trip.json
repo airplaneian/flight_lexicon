@@ -19,7 +19,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Free-text name for the trip. Public and permanent once published.",
+            "description": "Free-text name for the trip. Public as soon as the record is written, and copies may persist after the record is deleted.",
             "maxLength": 640,
             "maxGraphemes": 64
           },

@@ -189,7 +189,7 @@
           },
           "notes": {
             "type": "string",
-            "description": "Free-text note. Public and permanent once published; do not put booking references or other credentials here.",
+            "description": "Free-text note. Public as soon as the record is written, and copies may persist after the record is deleted. Do not put booking references or other credentials here.",
             "maxLength": 10000,
             "maxGraphemes": 1000
           }

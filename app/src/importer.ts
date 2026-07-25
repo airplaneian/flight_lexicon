@@ -425,7 +425,7 @@ function buildEditor(f: ParsedFlight, summary: HTMLElement, badges: HTMLElement)
     grid.append(el('label', { class: 'editor-field' }, el('span', {}, label), input))
   }
 
-  const notes = el('textarea', { rows: '2', placeholder: 'Public and permanent once written' }) as HTMLTextAreaElement
+  const notes = el('textarea', { rows: '2', placeholder: 'Public as soon as it is written' }) as HTMLTextAreaElement
   notes.value = String((effective(f) as Record<string, unknown>)['notes'] ?? '')
   notes.addEventListener('input', () => onChange('notes', notes.value))
 
