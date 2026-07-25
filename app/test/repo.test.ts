@@ -114,7 +114,7 @@ test('every schema field is claimed as owned, so none goes stale on update', asy
   // over from the existing record.
   const { OWNED_FIELDS } = await import('../src/repo.ts')
   const populated: Record<string, unknown> = {
-    $type: FLIGHT_NSID, date: 'n', origin: 'n', destination: 'n', source: 'n', sourceId: 'n',
+    $type: FLIGHT_NSID, date: 'n', origin: 'n', destination: 'n', route: 'n', source: 'n', sourceId: 'n',
     callsign: 'n', operator: 'n', operatorName: 'n', flightNumber: 'n',
     marketingAirline: 'n', marketingFlightNumber: 'n',
     registration: 'n', registeredOwner: 'n', aircraftType: 'n', icaoTypeDesignator: 'n', icao24: 'n',

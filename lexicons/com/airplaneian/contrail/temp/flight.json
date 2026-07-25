@@ -32,6 +32,11 @@
             "ref": "com.airplaneian.contrail.temp.defs#place",
             "description": "Where the flight arrived, or was intended to arrive if it was cancelled. If it diverted, this stays the intended destination and 'diversionAirport' holds where it landed."
           },
+          "route": {
+            "type": "string",
+            "description": "The route as filed, written as the flight plan expressed it, for example 'SSTIK2 SSTIK Q90 AVOSE'. Free text, not normalised and not reliable for matching. This is the planned route, not the flown track: a track belongs in a surveillance archive, which 'icao24' and a departure time are enough to query.",
+            "maxLength": 1000
+          },
           "source": {
             "type": "string",
             "description": "Short identifier for the tool or dataset that wrote this record, for example 'flighty', 'manual', or 'adsb'.",

@@ -381,6 +381,7 @@ function paintSummary(f: ParsedFlight, summary: HTMLElement, badges: HTMLElement
  *  quiet way to publish the wrong instant. */
 const EDITABLE: { field: keyof FlightRecord; label: string }[] = [
   { field: 'date', label: 'Date' },
+  { field: 'route', label: 'Filed route' },
   { field: 'callsign', label: 'Callsign' },
   { field: 'operator', label: 'Operator (ICAO)' },
   { field: 'operatorName', label: 'Operator name' },

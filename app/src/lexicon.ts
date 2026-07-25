@@ -18,6 +18,7 @@ export interface FlightRecord {
   date?: string
   origin?: Place
   destination?: Place
+  route?: string
   source?: string
   sourceId?: string
   callsign?: string

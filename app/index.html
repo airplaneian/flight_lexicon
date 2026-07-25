@@ -261,6 +261,20 @@
           exception is <code>place.geo</code>, which exists for landing sites that no identifier
           system covers.
         </p>
+        <p>
+          The flown track is excluded as well, and this is the one exclusion that people ask about
+          most. A single long-haul flight is ten to fifteen thousand ADS-B positions, and because
+          the AT Protocol data model has no floating point type, every latitude, longitude and
+          altitude has to be stored as a string. That is roughly a megabyte per flight, around a
+          hundred times the size of the record describing it.
+        </p>
+        <p>
+          A record carries <code>route</code> for the route as filed, which is compact and is
+          genuinely something the author asserts. For the track actually flown, the record already
+          carries what you need to find it: <code>icao24</code> together with a departure time is
+          exactly what a surveillance archive is queried with. Storing the track would duplicate a
+          measurement made by receivers into a repository of assertions made by a person.
+        </p>
       </section>
 
       <section>

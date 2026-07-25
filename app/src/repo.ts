@@ -11,7 +11,7 @@ import { FLIGHT_NSID, TRIP_NSID, type FlightRecord, type TripRecord } from './le
 /** Fields this tool owns. Anything else on an existing record is another
  *  tool's and must survive an update untouched. */
 export const OWNED_FIELDS = new Set<keyof FlightRecord | '$type'>([
-  '$type', 'date', 'origin', 'destination', 'source', 'sourceId',
+  '$type', 'date', 'origin', 'destination', 'route', 'source', 'sourceId',
   'callsign', 'operator', 'operatorName', 'flightNumber',
   'marketingAirline', 'marketingFlightNumber',
   'registration', 'registeredOwner', 'aircraftType', 'icaoTypeDesignator', 'icao24',
