@@ -167,6 +167,34 @@
       </section>
 
       <section>
+        <h2>Airports and landing sites</h2>
+        <p>
+          Every place in a record uses the same definition, whether it is an origin, a destination
+          or a diversion, and all of its fields are optional. That is what lets one shape describe
+          both a major international airport and a grass strip.
+        </p>
+        <p>
+          Three identifier fields exist because no single system covers everything. ICAO location
+          indicators are globally unique and are not reassigned, so prefer <code>icao</code> where
+          a place has one. IATA codes are reassigned between airports over time and are absent for
+          the great majority of general aviation fields. Many United States airfields have an FAA
+          Location Identifier and no ICAO indicator at all, which is why <code>faaLid</code> is its
+          own field rather than something written into <code>icao</code>.
+        </p>
+        <p>
+          Never derive one identifier from another. A wrong code is worse than an absent one, and
+          readers reconciling records match on whatever the fields actually contain. Sites that no
+          identifier system covers, including private strips and off-airport landings, use
+          <code>name</code> and <code>geo</code> instead.
+        </p>
+        <p>
+          Terminal and gate live here too. They describe how a particular flight was handled at a
+          place rather than a property of the place itself, which is why they belong to the record
+          and not to any airport dataset.
+        </p>
+      </section>
+
+      <section>
         <h2>Working with surveillance data</h2>
         <p>
           The aircraft and operator fields are shaped to take ADS-B data without losing anything.
@@ -188,6 +216,35 @@
           registered to a trust company and a Cessna 172 to an LLC named after its own tail number.
           That value belongs in <code>registeredOwner</code>. Military and state aircraft usually
           have no entry at all.
+        </p>
+      </section>
+
+      <section>
+        <h2>Grouping flights into trips</h2>
+        <p>
+          A second record type, <code>com.airplaneian.contrail.temp.trip</code>, groups flights
+          that belonged to one journey. It is a record of its own rather than a field on the
+          flight, so that a flight record stays a standalone assertion. Deleting a trip orphans
+          nothing, and a flight written by someone with no interest in trips is unaffected.
+        </p>
+        <p>
+          The reference points one way only, from the trip to its flights. Nothing in the protocol
+          keeps two directions consistent, so a flight carries no trip reference and there is no
+          pair of fields that can disagree with each other.
+        </p>
+        <p>
+          Flights are referenced by plain AT-URI rather than by
+          <code>com.atproto.repo.strongRef</code>. A strong reference pins exact record content,
+          which is right for a like or a repost, but flight records are expected to be corrected in
+          place as better data arrives and every correction would break a pinned reference. The
+          tradeoff is that a reference may dangle if a flight is later deleted, and readers must
+          tolerate that rather than treat it as an error.
+        </p>
+        <p>
+          A trip references only flight records its own author wrote, and makes no claim about
+          anyone else's repository. The importer below derives trips from booking references, which
+          are read in the browser and never written into a record, because a booking reference can
+          be used to retrieve a reservation.
         </p>
       </section>
 

@@ -117,6 +117,7 @@ function renderPanel(doc) {
       `<div class="lexdef">`,
       `<div class="lexdef-head"><code>${esc(name === 'main' ? doc.id : `${doc.id}#${name}`)}</code><span class="lexkind">${esc(kind)}</span></div>`,
       def.description ? renderProse(def.description, 'lexdef-desc') : '',
+      `<p class="lexfields-label">${Object.keys(shape.properties ?? {}).length} fields, ${required.size} required</p>`,
       `<div class="lexfields">${fields}</div>`,
       `</div>`,
     ].join('')

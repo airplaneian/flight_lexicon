@@ -5,7 +5,7 @@
     "main": {
       "type": "record",
       "key": "tid",
-      "description": "An assertion that a particular flight existed. The record describes the flight itself rather than the author's experience of it, so it is not a personal log entry. The author's connection to the flight is an optional annotation in 'relationship', and when that field is absent no claim is being made either way. Only 'createdAt' is required. Every other field is optional, and an absent field means the value is unknown or does not apply, never that it is empty or zero. Several people may write records describing the same flight and none of them is canonical, so write the identifying fields consistently wherever they are known: 'date', 'operator' and 'flightNumber' for scheduled service, 'icao24' with an actual departure time otherwise, and 'callsign' verbatim wherever a source supplies one. There is no global flight identifier, because no authority exists to issue one. Any kind of flying is in scope, from scheduled airline service through cargo, charter, state and military operations to general aviation, and origin may equal destination. Values derivable from other fields, such as duration and distance, are excluded on purpose, because tools computing them separately will disagree. Reference data about the world, such as airport names or coordinates looked up from a code, does not belong in a personal repository either. Note that a collection of these records is a movement history, and discloses the author's travel patterns regardless of what any individual record claims.",
+      "description": "An assertion that a particular flight existed, rather than a personal log entry about the author. Only 'createdAt' is required. Every other field is optional, and absent means unknown or not applicable rather than empty or zero. The exception is 'relationship', where absent means no claim is being made. Records of the same flight written by different people are expected, so write the identifying fields consistently. Any kind of flying is in scope, and origin may equal destination.",
       "record": {
         "type": "object",
         "required": [
@@ -15,131 +15,131 @@
           "createdAt": {
             "type": "string",
             "format": "datetime",
-            "description": "When this record was written, as distinct from when the flight happened. The only required field. Write it with an explicit UTC offset and no fractional seconds, for example '2026-07-24T18:22:05-07:00' or '2026-07-25T01:22:05Z'. Fractional seconds are omitted throughout this schema because trailing zeroes in a fractional part round-trip ambiguously and lose precision inconsistently between implementations; a fixed convention avoids both problems."
+            "description": "When this record was written, not when the flight happened. Explicit UTC offset, no fractional seconds."
           },
           "date": {
             "type": "string",
-            "description": "Calendar date of departure at the origin, as 'YYYY-MM-DD'. Present as its own field rather than derived from the timestamps because it forms one third of the commercial identity key, alongside 'operator' and 'flightNumber', and because deriving it from an instant requires knowing the origin's local offset, which a reader may not have. Where both this and a departure timestamp are written they must agree. Write it consistently, since cross-repository matching depends on it.",
+            "description": "Calendar date of departure at the origin, as 'YYYY-MM-DD'. Part of the identity key with 'operator' and 'flightNumber'. Must agree with any departure timestamp.",
             "maxLength": 10
           },
           "origin": {
             "type": "ref",
             "ref": "com.airplaneian.contrail.temp.defs#place",
-            "description": "Where the flight departed. May equal 'destination': local flights that return to their departure point, such as circuits, sightseeing, or training sorties, are ordinary and must not be treated as an error."
+            "description": "Where the flight departed. May equal 'destination'; local flights are ordinary."
           },
           "destination": {
             "type": "ref",
             "ref": "com.airplaneian.contrail.temp.defs#place",
-            "description": "Where the flight arrived, or where it was intended to arrive if it was cancelled. If the flight diverted, this remains the intended destination and the actual landing place goes in 'diversionAirport'."
+            "description": "Where the flight arrived, or was intended to arrive if it was cancelled. If it diverted, this stays the intended destination and 'diversionAirport' holds where it landed."
           },
           "source": {
             "type": "string",
-            "description": "Short identifier for the tool or dataset that produced this record, for example 'flighty', 'manual', or 'adsb'. Together with 'sourceId' this lets a tool find the records it wrote previously and update them in place instead of creating duplicates on a re-import. It also records provenance: the same record shape carries a first-hand passenger entry and a machine-harvested observation, and 'source' is what distinguishes them.",
+            "description": "Short identifier for the tool or dataset that wrote this record, for example 'flighty', 'manual', or 'adsb'.",
             "maxLength": 64
           },
           "sourceId": {
             "type": "string",
-            "description": "The identifier the tool named in 'source' uses for this flight, in that tool's own namespace, typically an opaque key from an export. Deliberately stored in the record body rather than encoded into the record key, so that a record can be corrected without changing its identity: deriving keys from content would turn a corrected flight number into a new record instead of an update. Meaningful only in combination with 'source', and carries no meaning to readers who do not know that tool.",
+            "description": "That tool's own identifier for this flight. Kept in the record body rather than the record key, so a record can be corrected without becoming a new one. Meaningful only with 'source'.",
             "maxLength": 512
           },
           "callsign": {
             "type": "string",
-            "description": "The flight identification the aircraft transmitted, written exactly as received, uppercase with no padding or spaces. This is the primary flight identifier available from ADS-B and other surveillance sources, and it must not be decomposed on the way in: 'UAL38' splits cleanly into an operator and a flight number, but a general aviation aircraft transmits its registration, and state or military aircraft commonly transmit something with no civil structure at all, such as 'LEGACY' or 'KLH71'. Write this field verbatim and populate 'operator' and 'flightNumber' as well only when the split is unambiguous. Absent for sources that never see a callsign, such as a passenger's own booking history.",
+            "description": "The flight identification the aircraft transmitted, uppercase, verbatim. Never decompose it: populate 'operator' and 'flightNumber' as well only when the split is unambiguous.",
             "maxLength": 16
           },
           "operator": {
             "type": "string",
-            "description": "ICAO designator of the agency that actually operated the flight, three letters, uppercase. Not restricted to airlines: 'UAL' for an airline, 'FDX' for a cargo carrier, 'RCH' for a military air mobility flight. ICAO rather than IATA because IATA codes are recycled between carriers, so a historical record tagged with one is ambiguous. Absent for most general aviation, where no designator exists; use 'operatorName' in that case. Part of the commercial identity key alongside 'date' and 'flightNumber', so write it consistently where it is known, since cross-repository matching depends on it.",
+            "description": "ICAO designator of the agency that operated the flight, three letters, uppercase. Not airlines only: 'UAL', 'FDX', 'RCH'. Use 'operatorName' where no designator exists.",
             "maxLength": 8
           },
           "operatorName": {
             "type": "string",
-            "description": "Free-text name of the agency that operated the flight, for operators that have no ICAO designator: flight schools, charter and air taxi businesses, law enforcement and government units, private owners flying their own aircraft. Not normalised and not reliable for matching, in the same way that 'aircraftType' complements 'icaoTypeDesignator'. Do not restate here the name of an operator whose designator is already in 'operator'. Note that this is who flew the aircraft, which is frequently not who owns it.",
+            "description": "Free-text name of the operating agency, for operators with no ICAO designator. Not reliable for matching. This is who flew the aircraft, which is often not who owns it.",
             "maxLength": 128
           },
           "flightNumber": {
             "type": "string",
-            "description": "The operating agency's flight number, as a string rather than an integer. Alphabetic suffixes are in real use, some sources emit malformed values, and a numeric type could never be loosened later without breaking every existing record. Write the digits alone without the operator designator prefix. Part of the commercial identity key, so write it consistently, since cross-repository matching depends on it. Absent for flights that have no flight number, which is most of general aviation and much state and military flying.",
+            "description": "The operating agency's flight number, as a string. Digits only, without the operator prefix.",
             "maxLength": 16
           },
           "marketingAirline": {
             "type": "string",
-            "description": "ICAO designator of the airline that sold the flight, when it differs from 'operator'. This one is deliberately named for airlines, because codeshare marketing is an airline arrangement and has no counterpart in other kinds of operation. Absent means either that there was no codeshare or that it is unknown. Do not put the marketing carrier in 'operator'; the distinction is what lets two records describing one physical flight be recognised as such.",
+            "description": "ICAO designator of the airline that sold the flight, when it differs from 'operator'. Codeshares only.",
             "maxLength": 8
           },
           "marketingFlightNumber": {
             "type": "string",
-            "description": "Flight number under which the flight was sold, when it differs from 'flightNumber'. A string, for the same reasons.",
+            "description": "Flight number under which the flight was sold, when it differs from 'flightNumber'.",
             "maxLength": 16
           },
           "registration": {
             "type": "string",
-            "description": "Registration or tail number of the airframe, for example 'N12345' or 'GVBOW'. Write it uppercase with no hyphens, spaces, or other separators, so that 'G-VBOW' and 'GVBOW' do not become two different aircraft to a reader. This normalisation matters because registration is one of the few fields by which general aviation records can be matched across repositories. Military and state aircraft carry identifiers in this field too, in whatever form their operator uses, such as 'MM62209' or 'FAC1215'. Note that registrations are reassigned to different airframes over time, so 'icao24' is the more durable airframe identifier where it is known.",
+            "description": "Registration or tail number, uppercase with no hyphens or spaces, so that 'G-VBOW' and 'GVBOW' are one aircraft. Military and state identifiers go here too.",
             "maxLength": 16
           },
           "registeredOwner": {
             "type": "string",
-            "description": "Free-text name of the party the airframe is registered to, as the civil registry records it. This is deliberately separate from 'operator' and 'operatorName', because the registrant is frequently not the operator: a large share of the fleet is registered to trusts, banks, or single-purpose holding companies, such as 'WILMINGTON TRUST CO TRUSTEE' or a limited company named after the tail number. Surveillance datasets usually expose a single combined owner-or-operator field, and its contents are the registrant, so it belongs here rather than in 'operator'. Absent for aircraft with no public registry entry, which includes most military aircraft.",
+            "description": "Free-text name of the party the airframe is registered to. Often a trust or holding company, and frequently not the operator.",
             "maxLength": 128
           },
           "aircraftType": {
             "type": "string",
-            "description": "Free-text description of the aircraft type as the source expressed it, for example 'Boeing 737-800' or 'Piper PA-18 Super Cub'. Present because most sources supply a name rather than a designator, and discarding it in favour of an empty 'icaoTypeDesignator' would lose real information. Not normalised and not reliable for matching, so use 'icaoTypeDesignator' for that. Do not derive one field from the other, because a guessed designator is worse than an absent one and several distinct designators share a single marketing name.",
+            "description": "Free-text aircraft type as the source expressed it, for example 'Boeing 737-800'. Not reliable for matching. Do not derive it from 'icaoTypeDesignator' or the reverse.",
             "maxLength": 128
           },
           "icaoTypeDesignator": {
             "type": "string",
-            "description": "ICAO aircraft type designator, for example 'B77W' or 'C172'. Write it only when the source actually supplies a designator, not when it has been inferred from a marketing name.",
+            "description": "ICAO aircraft type designator, for example 'B77W'. Write it only when the source supplies a designator.",
             "maxLength": 8
           },
           "icao24": {
             "type": "string",
-            "description": "The airframe's 24-bit ICAO address as six lowercase hexadecimal characters, for example 'a1b2c3'. Stable per airframe and the primary identity field for general aviation, where there is no flight number to match on. Together with an actual departure time it forms the general aviation identity key; write both consistently, since cross-repository matching depends on them.",
+            "description": "The airframe's 24-bit ICAO address, six lowercase hexadecimal characters. With an actual departure time this is the identity key for flights with no flight number.",
             "maxLength": 8
           },
           "scheduledGateDeparture": {
             "type": "string",
             "format": "datetime",
-            "description": "Scheduled time the aircraft left the gate or parking position, the 'out' time. Write it with an explicit UTC offset and no fractional seconds. The eight time fields form the standard out, off, on and in set. All of them are optional, so a record knowing only a takeoff time is valid, and general aviation records will usually omit the gate times entirely."
+            "description": "Scheduled 'out' time, leaving the gate or parking position. Explicit UTC offset, no fractional seconds."
           },
           "actualGateDeparture": {
             "type": "string",
             "format": "datetime",
-            "description": "Actual time the aircraft left the gate or parking position, the 'out' time. Explicit UTC offset, no fractional seconds. The interval between this and 'actualGateArrival' is block time, which is not stored because it is derivable."
+            "description": "Actual 'out' time, leaving the gate or parking position. Explicit UTC offset, no fractional seconds."
           },
           "scheduledTakeoff": {
             "type": "string",
             "format": "datetime",
-            "description": "Scheduled wheels-off time, the 'off' time. Explicit UTC offset, no fractional seconds."
+            "description": "Scheduled 'off' time, wheels off. Explicit UTC offset, no fractional seconds."
           },
           "actualTakeoff": {
             "type": "string",
             "format": "datetime",
-            "description": "Actual wheels-off time, the 'off' time. Explicit UTC offset, no fractional seconds. Together with 'icao24' this forms the general aviation identity key, and it is usually the most reliably known time for a flight with no gate operations."
+            "description": "Actual 'off' time, wheels off. Explicit UTC offset, no fractional seconds."
           },
           "scheduledLanding": {
             "type": "string",
             "format": "datetime",
-            "description": "Scheduled wheels-on time, the 'on' time. Explicit UTC offset, no fractional seconds."
+            "description": "Scheduled 'on' time, wheels on. Explicit UTC offset, no fractional seconds."
           },
           "actualLanding": {
             "type": "string",
             "format": "datetime",
-            "description": "Actual wheels-on time, the 'on' time. Explicit UTC offset, no fractional seconds. The interval between this and 'actualTakeoff' is flight time, which is not stored because it is derivable."
+            "description": "Actual 'on' time, wheels on. Explicit UTC offset, no fractional seconds."
           },
           "scheduledGateArrival": {
             "type": "string",
             "format": "datetime",
-            "description": "Scheduled time the aircraft reached the gate or parking position, the 'in' time. Explicit UTC offset, no fractional seconds."
+            "description": "Scheduled 'in' time, reaching the gate or parking position. Explicit UTC offset, no fractional seconds."
           },
           "actualGateArrival": {
             "type": "string",
             "format": "datetime",
-            "description": "Actual time the aircraft reached the gate or parking position, the 'in' time. Explicit UTC offset, no fractional seconds."
+            "description": "Actual 'in' time, reaching the gate or parking position. Explicit UTC offset, no fractional seconds."
           },
           "relationship": {
             "type": "string",
-            "description": "The author's connection to this flight. Unlike every other field in this record, absent here does not mean unknown: it means no claim of any relationship is being made. A record written from ADS-B data about someone else's flight simply omits it. An open string rather than a closed set, so that relationships nobody anticipated can be expressed without a schema change, and readers must tolerate values outside the known list. Note that omitting this field does not make a record private, because the presence of flight records in a repository discloses the author's connection to those flights regardless of what the records claim.",
+            "description": "The author's connection to this flight. Absent means no claim is being made, unlike every other field where absent means unknown. Open string: readers must tolerate values outside the known list.",
             "knownValues": [
               "passenger",
               "pic",
@@ -153,12 +153,12 @@
           },
           "seat": {
             "type": "string",
-            "description": "Seat occupied, as a string, for example '14C', with row and position together, since the letter is not optional and the whole value is not a number. Only meaningful when 'relationship' indicates the author was aboard.",
+            "description": "Seat occupied, as a string, for example '14C'.",
             "maxLength": 16
           },
           "cabin": {
             "type": "string",
-            "description": "Cabin or class of service. An open string rather than an enumeration because carriers invent and rename cabins continually and any closed set would be obsolete within a year. Write lower camel case, matching the known values below, so that records from different tools compare equal; readers must tolerate values outside the list.",
+            "description": "Cabin or class of service. Open string, lower camel case; readers must tolerate values outside the known list.",
             "knownValues": [
               "economy",
               "premiumEconomy",
@@ -169,7 +169,7 @@
           },
           "status": {
             "type": "string",
-            "description": "How the flight concluded. Absent means unknown rather than normal, so write 'normal' explicitly when it is known that the flight operated as planned. An open string for consistency with the other classification fields here; readers must tolerate values outside the list.",
+            "description": "How the flight concluded. Absent means unknown, so write 'normal' explicitly when the flight operated as planned.",
             "knownValues": [
               "normal",
               "cancelled",
@@ -180,11 +180,11 @@
           "diversionAirport": {
             "type": "ref",
             "ref": "com.airplaneian.contrail.temp.defs#place",
-            "description": "Where the flight actually landed, when it did not land at 'destination'. Present only when 'status' is 'diverted'. 'destination' continues to hold the intended arrival point."
+            "description": "Where the flight actually landed, when that was not 'destination'. Present only when 'status' is 'diverted'."
           },
           "notes": {
             "type": "string",
-            "description": "Free-text note about the flight. Everything written here is public and permanent once the record is published, and unlike the structured fields its contents cannot be reviewed by a tool for anything the author did not mean to disclose. Tools writing records on a user's behalf should show note contents prominently before publishing. Do not use this field to carry structured data that belongs in a dedicated field, and do not use it for booking references or other credentials.",
+            "description": "Free-text note. Public and permanent once published; do not put booking references or other credentials here.",
             "maxLength": 10000,
             "maxGraphemes": 1000
           }

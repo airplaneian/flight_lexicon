@@ -5,7 +5,7 @@
     "main": {
       "type": "record",
       "key": "tid",
-      "description": "An assertion that a set of flights belonged to one journey. Grouping is a separate record so that a flight record stays a standalone assertion that does not depend on any grouping existing, and so that deleting a trip orphans nothing. The reference points one way only, from trip to flight, because nothing in the protocol keeps two directions consistent. A trip references only flight records the author wrote, and makes no claim about anyone else's repository. Only 'createdAt' is required, and an absent field means unknown or not applicable. Values derivable from the referenced flights, including start and end dates, leg count and total distance, are excluded on purpose. Note that a trip discloses more than its flights do individually, because it asserts that particular journeys were a single continuous absence.",
+      "description": "An assertion that a set of flights belonged to one journey. Only 'createdAt' is required, and absent means unknown or not applicable. The reference points one way only, from trip to flight, and a trip references only flight records the author wrote.",
       "record": {
         "type": "object",
         "required": [
@@ -15,17 +15,17 @@
           "createdAt": {
             "type": "string",
             "format": "datetime",
-            "description": "When this record was written, as distinct from when the trip happened. The only required field. Write it with an explicit UTC offset and no fractional seconds, for example '2026-07-25T18:22:05-07:00'."
+            "description": "When this record was written, not when the trip happened. Explicit UTC offset, no fractional seconds."
           },
           "name": {
             "type": "string",
-            "description": "Free-text name for the trip, for example 'Tokyo, spring 2026'. Optional, and as with any free text it is public and permanent once published.",
+            "description": "Free-text name for the trip. Public and permanent once published.",
             "maxLength": 640,
             "maxGraphemes": 64
           },
           "flights": {
             "type": "array",
-            "description": "The flights that made up this trip, in the order they were flown, as AT-URIs pointing at com.airplaneian.contrail.temp.flight records. Plain AT-URIs rather than content-pinned strong references, because flight records are expected to be corrected in place as better data arrives, and a pinned reference would break on every such correction. References may dangle if a flight is later deleted; readers must tolerate that rather than treat it as an error.",
+            "description": "The flights in this trip, in the order flown, as AT-URIs to flight records. Plain AT-URIs rather than strong references, since flight records are corrected in place. References may dangle; readers must tolerate that.",
             "items": {
               "type": "string",
               "format": "at-uri"
@@ -34,12 +34,12 @@
           },
           "source": {
             "type": "string",
-            "description": "Short identifier for the tool that produced this record, for example 'flighty' or 'manual'. Same meaning as on a flight record: together with 'sourceId' it lets a tool update the trips it wrote previously instead of duplicating them on a re-import.",
+            "description": "Short identifier for the tool that wrote this record.",
             "maxLength": 64
           },
           "sourceId": {
             "type": "string",
-            "description": "The identifier the tool named in 'source' uses for this trip, in that tool's own namespace. Note that a source's grouping key may be sensitive even when the resulting grouping is not. A booking reference, for instance, is a credential that can be used to retrieve a reservation, and must not be written here. Derive an opaque identifier instead where the natural key cannot be published.",
+            "description": "That tool's own identifier for this trip. A grouping key may be sensitive even when the grouping is not: never write a booking reference here.",
             "maxLength": 512
           }
         }
