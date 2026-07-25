@@ -676,7 +676,9 @@ button.ghost:hover:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.625rem 0;
+  /* Left gutter clears the selected-row accent bar, and is always present so
+     selecting a row does not shift its contents. */
+  padding: 0.625rem 0 0.625rem 0.75rem;
 }
 
 .flight-pick {
@@ -738,7 +740,8 @@ input[type='checkbox'] {
 /* ── Per-flight editor ── */
 
 .editor {
-  padding: 0.25rem 0 1.125rem 1.8rem;
+  /* Aligns with the summary text: gutter + checkbox + gap. */
+  padding: 0.25rem 0 1.125rem 2.55rem;
 }
 
 .editor-issues {
