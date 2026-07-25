@@ -49,7 +49,9 @@
       "Bash(dig +short TXT _lexicon.temp.contrail.airplaneian.com @1.1.1.1)",
       "Bash(cd /Users/iservin/Documents/flight_lexicon/app *)",
       "Read(//Users/iservin/Documents/lexicons/com/airplaneian/contrail/**)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(sed -i '' 's|class=\"wordmark\"|class=\"eyebrow\"|; s|class=\"standfirst\"|class=\"tagline\"|' index.html)",
+      "Bash(sed -i '' 's|<link rel=\"stylesheet\" href=\"/src/styles.css\" />|<meta name=\"theme-color\" content=\"#0a0a0a\" />\\\\n    <link rel=\"stylesheet\" href=\"/src/styles.css\" />|' index.html)"
     ]
   }
 }

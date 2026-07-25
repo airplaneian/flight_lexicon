@@ -1,49 +1,35 @@
-:root {
-  --bg: #fbfaf8;
-  --surface: #ffffff;
-  --text: #1a1a1a;
-  --muted: #6b6b6b;
-  --rule: #e3e0da;
-  --accent: #1f5f8b;
-  --accent-soft: #eaf1f6;
-  --warn-bg: #fdf6e8;
-  --warn-rule: #d9b872;
-  --warn-text: #6b4e12;
-  --danger: #a3341f;
-  --code-bg: #f4f2ee;
-  --measure: 34rem;
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14161a;
-    --surface: #1b1e24;
-    --text: #e8e6e1;
-    --muted: #9a9a95;
-    --rule: #2c3038;
-    --accent: #7db4dc;
-    --accent-soft: #1d2833;
-    --warn-bg: #26210f;
-    --warn-rule: #6b5a2a;
-    --warn-text: #e0c98a;
-    --danger: #e08a72;
-    --code-bg: #14171c;
-  }
-}
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface-h: #1c1c1c;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-h: rgba(255, 255, 255, 0.25);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.4);
+  --accent: #f97316;
+  --accent-h: #fb923c;
+  /* Contrail is long-form where Easy ADS-B is not, so body copy sits just
+     below full white. Everything else matches. */
+  --prose: rgba(255, 255, 255, 0.82);
+  --measure: 680px;
+  color-scheme: dark;
 }
 
 body {
-  margin: 0;
-  padding: 0 1.5rem 6rem;
   background: var(--bg);
   color: var(--text);
-  font: 400 17px/1.65 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -52,101 +38,121 @@ main,
 footer {
   max-width: var(--measure);
   margin-inline: auto;
+  padding-inline: 1.5rem;
 }
+
+/* ── Header ── */
 
 .masthead {
-  padding: 5rem 0 3.5rem;
+  padding-top: 15vh;
+  padding-bottom: 4rem;
 }
 
-.wordmark {
-  margin: 0 0 1.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+.eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 1.25rem;
 }
 
 h1 {
-  margin: 0;
-  font-size: 2.4rem;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
-  font-weight: 600;
+  /* Narrower range than Easy ADS-B's, which sets a two-word title. */
+  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin-bottom: 1.125rem;
   text-wrap: balance;
 }
 
-.standfirst {
-  margin: 1rem 0 0;
-  font-size: 1.1rem;
+.tagline {
+  font-size: 1.0625rem;
   color: var(--muted);
-  text-wrap: pretty;
+  line-height: 1.55;
+  max-width: 480px;
 }
 
 .cta {
-  margin: 1.25rem 0 0;
-  font-size: 1rem;
+  margin-top: 1.5rem;
+  color: var(--muted);
 }
 
+/* ── Prose ── */
+
 section {
-  margin: 3.5rem 0;
+  margin-bottom: 4rem;
 }
 
 h2 {
-  margin: 0 0 1rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: -0.015em;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
 }
 
 h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
 }
 
 p {
-  margin: 0 0 1rem;
+  color: var(--prose);
+  margin-bottom: 1rem;
 }
 
 a {
   color: var(--accent);
-  text-underline-offset: 0.2em;
-  text-decoration-thickness: 1px;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(249, 115, 22, 0.35);
+  transition: color 0.12s, border-color 0.12s;
+}
+
+a:hover {
+  color: var(--accent-h);
+  border-bottom-color: var(--accent-h);
+}
+
+strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 code {
-  font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
-  font-size: 0.86em;
-  background: var(--code-bg);
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.875em;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
 }
 
 pre {
-  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.375rem;
   overflow-x: auto;
-  background: var(--code-bg);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 1rem;
 }
 
 pre code {
   background: none;
   padding: 0;
   font-size: 0.78rem;
-  line-height: 1.55;
+  line-height: 1.6;
+  color: var(--prose);
 }
 
 hr {
   border: 0;
-  border-top: 1px solid var(--rule);
-  margin: 4rem 0;
+  border-top: 1px solid var(--border);
+  margin-bottom: 4rem;
 }
 
 .aside {
-  font-size: 0.92rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -155,103 +161,119 @@ hr {
 }
 
 .mono {
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 0.85rem;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 
-.error {
-  color: var(--danger);
-  border-left: 3px solid var(--danger);
-  padding-left: 0.85rem;
-}
+/* ── Record examples ── */
 
-/* Side-by-side record examples, stacking on narrow screens. */
 .examples {
   display: grid;
   gap: 1rem;
-  margin: 1.5rem 0;
+  margin-bottom: 1.25rem;
 }
 
-@media (min-width: 60rem) {
+@media (min-width: 62rem) {
   .examples {
     grid-template-columns: 1fr 1fr;
-    /* Let the examples breathe past the prose measure. */
     width: calc(100vw - 3rem);
-    max-width: 62rem;
-    margin-inline: calc((var(--measure) - min(100vw - 3rem, 62rem)) / 2);
+    max-width: 64rem;
+    margin-inline: calc((var(--measure) - 3rem - min(100vw - 3rem, 64rem)) / 2);
   }
 }
 
-figure {
-  margin: 0;
+figcaption {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.75rem;
 }
 
-figcaption {
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-  margin-bottom: 0.5rem;
-}
+/* ── Identity key table ── */
 
 .keys {
   border-collapse: collapse;
-  margin: 1rem 0 1.5rem;
   width: 100%;
+  margin-bottom: 1.5rem;
 }
 
 .keys th,
 .keys td {
   text-align: left;
-  padding: 0.5rem 0.75rem 0.5rem 0;
-  border-bottom: 1px solid var(--rule);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
   vertical-align: top;
+  color: var(--prose);
 }
 
 .keys th {
   font-weight: 600;
+  color: var(--text);
   white-space: nowrap;
-  padding-right: 1.25rem;
+  padding-right: 1.5rem;
 }
 
 .schemas {
-  margin: 0 0 1rem;
-  padding-left: 1.1rem;
+  list-style: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 1rem;
 }
 
 .schemas li {
-  margin-bottom: 0.35rem;
+  background: var(--surface);
+  padding: 0.875rem 1.375rem;
+  font-size: 0.9375rem;
+  color: var(--prose);
 }
 
+/* ── Warning ── */
+
 .warning {
-  background: var(--warn-bg);
-  border: 1px solid var(--warn-rule);
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem;
-  margin: 2rem 0;
-  color: var(--warn-text);
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 12px;
+  padding: 1.25rem 1.375rem;
+  margin-bottom: 2rem;
+  color: #fb923c;
+  font-size: 0.9rem;
 }
 
 .warning h3 {
   color: inherit;
 }
 
+.warning p {
+  color: inherit;
+  line-height: 1.5;
+}
+
 .warning p:last-child {
   margin-bottom: 0;
 }
 
-/* ---- importer ---- */
+.warning code {
+  background: rgba(249, 115, 22, 0.15);
+}
+
+/* ── Importer ── */
 
 #app {
   margin-top: 2rem;
 }
 
 .panel {
-  border: 1px solid var(--rule);
-  border-radius: 8px;
   background: var(--surface);
-  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.375rem;
 }
 
 .account {
@@ -260,69 +282,70 @@ figcaption {
   align-items: baseline;
   gap: 1rem;
   flex-wrap: wrap;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-bottom: 1rem;
 }
 
-.account code {
-  font-size: 0.8rem;
-}
-
 button {
-  font: inherit;
-  font-size: 0.95rem;
-  padding: 0.55rem 1.1rem;
-  border-radius: 6px;
-  border: 1px solid var(--rule);
-  background: var(--surface);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 0.55rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: none;
   color: var(--text);
   cursor: pointer;
+  transition: border-color 0.12s, background 0.15s, opacity 0.15s;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--border-h);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 button.primary {
   background: var(--accent);
-  border-color: var(--accent);
+  border-color: transparent;
   color: #fff;
-  font-weight: 500;
   margin-top: 1.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  button.primary {
-    color: #0f1216;
-  }
+button.primary:hover:not(:disabled) {
+  background: var(--accent-h);
+  border-color: transparent;
 }
 
 button.link {
   border: 0;
-  background: none;
-  color: var(--accent);
   padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  font-weight: 500;
+  font-size: inherit;
+  color: var(--accent);
+}
+
+button.link:hover {
+  color: var(--accent-h);
 }
 
 .signin {
-  border: 1px solid var(--rule);
-  border-radius: 8px;
   background: var(--surface);
-  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.375rem;
 }
 
 .signin label {
   display: block;
-  font-weight: 500;
-  margin-bottom: 0.6rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.75rem;
 }
 
 .row {
@@ -332,49 +355,57 @@ button.link {
 }
 
 input[type='text'] {
-  font: inherit;
-  font-size: 0.95rem;
   flex: 1 1 14rem;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 6px;
   background: var(--bg);
   color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.55rem 0.875rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.15s;
 }
 
-input[type='text']:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+input[type='text']:focus {
+  border-color: var(--border-h);
+}
+
+input[type='text']::placeholder {
+  color: var(--muted);
 }
 
 .signin .aside {
-  margin: 0.9rem 0 0;
+  margin-top: 1rem;
 }
 
 .dropzone {
-  border: 2px dashed var(--rule);
-  border-radius: 8px;
-  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
   text-align: center;
   transition: border-color 0.15s, background 0.15s;
 }
 
 .dropzone.over {
   border-color: var(--accent);
-  background: var(--accent-soft);
+  background: rgba(249, 115, 22, 0.06);
 }
 
 .dropzone label {
   display: inline-block;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.9375rem;
   color: var(--accent);
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+}
+
+.dropzone label:hover {
+  color: var(--accent-h);
 }
 
 .dropzone .aside {
-  margin: 0.5rem 0 0;
+  margin-top: 0.5rem;
 }
 
 .dropzone input[type='file'] {
@@ -387,28 +418,27 @@ input[type='text']:focus-visible {
 
 .summary p {
   margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
 }
 
 .trips {
   display: block;
-  font-size: 0.92rem;
+  font-size: 0.8125rem;
   color: var(--muted);
-  margin-top: 0.5rem;
 }
 
 .scroll {
-  overflow-x: auto;
-  margin: 1rem -0.5rem 0;
-  padding: 0 0.5rem;
+  margin: 1.125rem -1.375rem 0;
+  padding: 0 1.375rem;
   max-height: 26rem;
-  overflow-y: auto;
-  border-top: 1px solid var(--rule);
+  overflow: auto;
+  border-top: 1px solid var(--border);
 }
 
 .preview {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
 }
 
 .preview th {
@@ -416,32 +446,33 @@ input[type='text']:focus-visible {
   top: 0;
   background: var(--surface);
   text-align: left;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted);
   font-weight: 600;
-  padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid var(--rule);
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .preview td {
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--rule);
+  padding: 0.625rem 0.5rem;
+  border-bottom: 1px solid var(--border);
   vertical-align: top;
+  color: var(--prose);
 }
 
 .preview tr.excluded td {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 .badge {
   display: inline-block;
-  font-size: 0.72rem;
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--muted);
+  font-size: 0.6875rem;
+  padding: 0.15rem 0.625rem;
   margin: 0 0.25rem 0.25rem 0;
   white-space: nowrap;
   cursor: help;
@@ -451,19 +482,41 @@ input[type='text']:focus-visible {
 .badge.suspicious-flight-number,
 .badge.out-of-order,
 .badge.dst-nonexistent {
-  background: var(--warn-bg);
-  color: var(--warn-text);
+  border-color: rgba(249, 115, 22, 0.25);
+  background: rgba(249, 115, 22, 0.08);
+  color: var(--accent-h);
+}
+
+.error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  color: #fca5a5;
+  font-size: 0.9rem;
 }
 
 progress {
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+  accent-color: var(--accent);
 }
 
+/* ── Footer ── */
+
 footer {
-  margin-top: 5rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--rule);
-  font-size: 0.9rem;
+  padding-bottom: 6rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8125rem;
   color: var(--muted);
+}
+
+footer p {
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
 }
