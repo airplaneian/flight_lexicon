@@ -2,10 +2,17 @@
   "client_id": "https://contrail.airplaneian.com/client-metadata.json",
   "client_name": "Contrail",
   "client_uri": "https://contrail.airplaneian.com",
-  "redirect_uris": ["https://contrail.airplaneian.com/"],
+  "redirect_uris": [
+    "https://contrail.airplaneian.com/import/"
+  ],
   "scope": "atproto repo:com.airplaneian.contrail.temp.flight?action=create&action=update repo:com.airplaneian.contrail.temp.trip?action=create&action=update",
-  "grant_types": ["authorization_code", "refresh_token"],
-  "response_types": ["code"],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "response_types": [
+    "code"
+  ],
   "application_type": "web",
   "token_endpoint_auth_method": "none",
   "dpop_bound_access_tokens": true

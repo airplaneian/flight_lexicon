@@ -24,6 +24,10 @@ export const SCOPE = [
 
 export const PRODUCTION_ORIGIN = 'https://contrail.airplaneian.com'
 
+/** The importer lives on its own page, so that is where OAuth must return to.
+ *  Must match redirect_uris in public/client-metadata.json exactly. */
+export const REDIRECT_PATH = '/import/'
+
 /**
  * In development the atproto spec allows a loopback client, where the client_id
  * carries the redirect and scope as query parameters instead of pointing at a
@@ -33,7 +37,7 @@ export const PRODUCTION_ORIGIN = 'https://contrail.airplaneian.com'
 function clientId(): string {
   const { origin, hostname } = window.location
   if (hostname === '127.0.0.1' || hostname === '[::1]') {
-    const params = new URLSearchParams({ redirect_uri: `${origin}/`, scope: SCOPE })
+    const params = new URLSearchParams({ redirect_uri: `${origin}${REDIRECT_PATH}`, scope: SCOPE })
     return `http://localhost?${params}`
   }
   return `${origin}/client-metadata.json`

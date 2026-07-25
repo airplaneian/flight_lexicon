@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contrail: Flighty importer demo</title>
+    <meta name="description" content="Import selected flights from a Flighty CSV export into your own atproto repository as Contrail records. Runs entirely in the browser." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;&#65039;</text></svg>" />
+  </head>
+  <body>
+    <!--NAV-->
+
+    <header class="masthead">
+      <h1>Flighty importer demo</h1>
+      <p class="tagline">
+        A worked example of the lexicon in use. It writes Contrail records to your own repository,
+        and runs entirely in this page.
+      </p>
+    </header>
+
+    <main>
+      <section>
+                <p>
+          The demo below reads a <a href="https://flighty.com">Flighty</a> CSV export and turns it
+          into a list of flights to choose from. Your archive is treated as a set of candidates
+          rather than as a batch to upload. Nothing is written until you select something, and you
+          can pick a single flight, a handful, or the whole file if you want your full history on
+          your PDS.
+        </p>
+        <p>
+          Each flight can be edited before it is written, which is useful when the source data has
+          something wrong in it. Clearing a field removes it from the record entirely, since absent
+          means unknown.
+        </p>
+        <p>
+          It all runs in this page. Your file is parsed in the browser and is never uploaded,
+          because there is no server to upload it to.
+        </p>
+
+        <div class="warning" role="note">
+          <h3>Choosing what to publish</h3>
+          <p>
+            Nothing is selected by default, and that is deliberate. A complete flight history is
+            also a movement history: taken together, these records show where you are based, how
+            often you travel, and when you are away from home. Any one flight discloses very little
+            of that. The whole set discloses most of it.
+          </p>
+          <p>
+            Selecting everything is one button away if that is what you want. It is worth deciding
+            on purpose rather than by default, because writing a record publishes it immediately.
+            You can delete records from your repository afterwards, and a deletion is broadcast the
+            same way a creation is, but you cannot recall copies that other services have already
+            taken. Treat publishing as the irreversible step, not storage.
+          </p>
+          <p>
+            This holds regardless of what the records claim. The <code>relationship</code> field
+            being optional does not change it, because records about flights sitting in your
+            repository disclose your connection to those flights either way.
+          </p>
+        </div>
+
+        <p class="aside">
+          Contrail only ever creates and updates records. It does not delete them, and does not ask
+          for permission to, which is why the sign-in prompt says so. To remove records later,
+          <a href="https://pdsls.dev">pdsls.dev</a> can delete them from your repository.
+        </p>
+
+        <div id="app">
+          <noscript>
+            <p class="aside">The importer needs JavaScript. The rest of this page does not.</p>
+          </noscript>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Contrail is a proposal. The lexicons are the substance of it, and the importer exists to
+        demonstrate that the schema works and to give people a reason to write records with it.
+      </p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

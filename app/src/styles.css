@@ -43,10 +43,52 @@ footer {
   padding-inline: 1.5rem;
 }
 
+/* ── Navigation ── */
+
+.topnav {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.topnav-mark {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 0;
+}
+
+.topnav-links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.topnav-link {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  border-bottom: 0;
+}
+
+.topnav-link:hover {
+  color: var(--text);
+}
+
+.topnav-link[aria-current='page'] {
+  color: var(--text);
+}
+
 /* ── Header ── */
 
 .masthead {
-  padding-top: 15vh;
+  /* Shorter than a bare hero, since the nav now sits above it. */
+  padding-top: 9vh;
   padding-bottom: 4rem;
 }
 
@@ -159,6 +201,16 @@ hr {
 
 .muted {
   color: var(--muted);
+}
+
+/* Project status and similar meta notes. Marked with a rule rather than set in
+   --muted, which is a caption tone and too faint to carry something a reader
+   needs to see. */
+.notice {
+  font-size: 0.9375rem;
+  color: var(--prose-dim);
+  border-left: 2px solid var(--accent);
+  padding-left: 1.125rem;
 }
 
 .mono {

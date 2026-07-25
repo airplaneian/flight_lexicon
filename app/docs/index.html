@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contrail documentation</title>
+    <meta name="description" content="How Contrail flight records are written: identity fields, airports, surveillance data, trips, and what the schema deliberately leaves out." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;&#65039;</text></svg>" />
+  </head>
+  <body>
+    <!--NAV-->
+
+    <header class="masthead">
+      <h1>Documentation</h1>
+      <p class="tagline">
+        How a Contrail record is meant to be written, and why it is shaped the way it is. The field
+        reference lives on the <a href="/">front page</a>.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Records for every kind of flying</h2>
+        <p>
+          Contrail is intended to describe any kind of flying. Scheduled airline service and
+          general aviation are the most familiar examples, and they sit at roughly opposite ends of
+          how much structured information a flight carries, but they are not the limits of the
+          schema. Cargo, charter, business aviation, air ambulance, law enforcement, government,
+          military and flight training operations all use the same record type.
+        </p>
+        <p>
+          The difference between them is only which fields happen to apply. A cargo flight has an
+          operator and a flight number but no seat or cabin. A police helicopter may have nothing
+          beyond a registration, an aircraft type, and a takeoff and landing time. Both are
+          complete records, and so are the two below.
+        </p>
+        <div class="examples">
+          <figure>
+            <figcaption>Commercial</figcaption>
+            <pre><code>{
+  "$type": "com.airplaneian.contrail.temp.flight",
+  "createdAt": "2026-07-25T09:14:00-07:00",
+  "date": "2025-07-13",
+  "origin": { "iata": "SFO", "terminal": "INTL", "gate": "A2" },
+  "destination": { "iata": "LHR", "terminal": "3" },
+  "operator": "VIR",
+  "flightNumber": "20",
+  "marketingAirline": "DAL",
+  "marketingFlightNumber": "5964",
+  "registration": "GVBOW",
+  "aircraftType": "Boeing 787-9",
+  "actualGateDeparture": "2025-07-13T15:57:00-07:00",
+  "actualTakeoff":       "2025-07-13T16:25:00-07:00",
+  "actualLanding":       "2025-07-14T10:14:00+01:00",
+  "actualGateArrival":   "2025-07-14T10:23:00+01:00",
+  "relationship": "passenger",
+  "seat": "46K",
+  "status": "normal",
+  "source": "flighty",
+  "sourceId": "bef37d51-2876-433b-bffd-95c81f8fe569"
+}</code></pre>
+          </figure>
+          <figure>
+            <figcaption>General aviation</figcaption>
+            <pre><code>{
+  "$type": "com.airplaneian.contrail.temp.flight",
+  "createdAt": "2026-07-25T09:14:00-07:00",
+  "date": "2026-07-19",
+  "origin": {
+    "name": "Twin Oaks Airpark",
+    "faaLid": "7S3",
+    "geo": { "latitude": "45.42361", "longitude": "-122.94028" }
+  },
+  "destination": {
+    "name": "Twin Oaks Airpark",
+    "faaLid": "7S3",
+    "geo": { "latitude": "45.42361", "longitude": "-122.94028" }
+  },
+  "registration": "N12345",
+  "icao24": "a1b2c3",
+  "icaoTypeDesignator": "PA18",
+  "aircraftType": "Piper PA-18 Super Cub",
+  "actualTakeoff": "2026-07-19T10:12:00-07:00",
+  "actualLanding": "2026-07-19T10:58:00-07:00",
+  "relationship": "pic",
+  "source": "manual"
+}</code></pre>
+          </figure>
+        </div>
+        <p class="aside">
+          Note that the origin and destination in the general aviation example are the same place.
+          Local flights are ordinary and the schema treats them as such.
+        </p>
+      </section>
+
+      <section>
+        <h2>Identifying flights across repositories</h2>
+        <p>
+          Because a record describes the flight rather than the author, several people aboard the
+          same aircraft may each write a record for it. None of these is canonical, and Contrail
+          treats that duplication as expected. It does not attempt to define a global flight
+          identifier, because no authority exists to issue one.
+        </p>
+        <p>
+          This does mean readers need some way to recognise two repositories describing the same
+          flight, so the identifying fields carry more weight here than they would in a personal
+          logbook. Write them consistently wherever they are known.
+        </p>
+        <table class="keys">
+          <tbody>
+            <tr>
+              <th scope="row">Commercial</th>
+              <td><code>date</code> + <code>operator</code> + <code>flightNumber</code></td>
+            </tr>
+            <tr>
+              <th scope="row">General aviation</th>
+              <td><code>icao24</code> + <code>actualTakeoff</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The <code>operator</code> field takes the ICAO designator of whoever actually flew the
+          aircraft, and is not restricted to airlines: <code>UAL</code> for an airline,
+          <code>FDX</code> for a cargo carrier, <code>RCH</code> for a military air mobility
+          flight. It is the ICAO designator rather than the IATA code (<code>UA</code>) because
+          IATA codes are reassigned between carriers over time, which makes a historical record
+          tagged with one ambiguous. Operators with no designator at all, which is most of general
+          aviation, go in <code>operatorName</code> instead. Registrations are written in uppercase
+          with no hyphens, so that <code>G-VBOW</code> and <code>GVBOW</code> do not describe two
+          different aircraft.
+        </p>
+      </section>
+
+      <section>
+        <h2>Airports and landing sites</h2>
+        <p>
+          Every place in a record uses the same definition, whether it is an origin, a destination
+          or a diversion, and all of its fields are optional. That is what lets one shape describe
+          both a major international airport and a grass strip.
+        </p>
+        <p>
+          Three identifier fields exist because no single system covers everything. ICAO location
+          indicators are globally unique and are not reassigned, so prefer <code>icao</code> where
+          a place has one. IATA codes are reassigned between airports over time and are absent for
+          the great majority of general aviation fields. Many United States airfields have an FAA
+          Location Identifier and no ICAO indicator at all, which is why <code>faaLid</code> is its
+          own field rather than something written into <code>icao</code>.
+        </p>
+        <p>
+          Never derive one identifier from another. A wrong code is worse than an absent one, and
+          readers reconciling records match on whatever the fields actually contain. Sites that no
+          identifier system covers, including private strips and off-airport landings, use
+          <code>name</code> and <code>geo</code> instead.
+        </p>
+        <p>
+          Terminal and gate live here too. They describe how a particular flight was handled at a
+          place rather than a property of the place itself, which is why they belong to the record
+          and not to any airport dataset.
+        </p>
+      </section>
+
+      <section>
+        <h2>Working with surveillance data</h2>
+        <p>
+          The aircraft and operator fields are shaped to take ADS-B data without losing anything.
+          A surveillance feed supplies a Mode S address, a registration, an ICAO type designator, a
+          human-readable type description and a callsign, and each of those has a field of its own.
+        </p>
+        <p>
+          The callsign is written verbatim into <code>callsign</code> and is never decomposed on
+          the way in. <code>UAL38</code> and <code>FDX5608</code> split cleanly into an operator
+          and a flight number, so an importer can fill those as well. A general aviation aircraft
+          transmits its registration, and a state aircraft may transmit a bare word such as
+          <code>LEGACY</code>. Anything that cannot be split with certainty stays in
+          <code>callsign</code> alone.
+        </p>
+        <p>
+          Surveillance datasets usually expose a single combined owner-or-operator field, and in
+          practice its contents are the registrant rather than the operator. Much of the fleet is
+          registered to trusts and single-purpose holding companies, so a Pilatus PC-12 comes back
+          registered to a trust company and a Cessna 172 to an LLC named after its own tail number.
+          That value belongs in <code>registeredOwner</code>. Military and state aircraft usually
+          have no entry at all.
+        </p>
+      </section>
+
+      <section>
+        <h2>Grouping flights into trips</h2>
+        <p>
+          A second record type, <code>com.airplaneian.contrail.temp.trip</code>, groups flights
+          that belonged to one journey. It is a record of its own rather than a field on the
+          flight, so that a flight record stays a standalone assertion. Deleting a trip orphans
+          nothing, and a flight written by someone with no interest in trips is unaffected.
+        </p>
+        <p>
+          The reference points one way only, from the trip to its flights. Nothing in the protocol
+          keeps two directions consistent, so a flight carries no trip reference and there is no
+          pair of fields that can disagree with each other.
+        </p>
+        <p>
+          Flights are referenced by plain AT-URI rather than by
+          <code>com.atproto.repo.strongRef</code>. A strong reference pins exact record content,
+          which is right for a like or a repost, but flight records are expected to be corrected in
+          place as better data arrives and every correction would break a pinned reference. The
+          tradeoff is that a reference may dangle if a flight is later deleted, and readers must
+          tolerate that rather than treat it as an error.
+        </p>
+        <p>
+          A trip references only flight records its own author wrote, and makes no claim about
+          anyone else's repository. The importer below derives trips from booking references, which
+          are read in the browser and never written into a record, because a booking reference can
+          be used to retrieve a reservation.
+        </p>
+      </section>
+
+      <section>
+        <h2>What Contrail leaves out</h2>
+        <p>
+          Duration, distance, and great circle mileage are all derivable from the times and places
+          already present in a record. Storing them would guarantee that records written by
+          different tools eventually disagree with each other.
+        </p>
+        <p>
+          Airport names, coordinates, and elevations are reference data about the world rather than
+          assertions by the author, so they do not belong in a personal repository. The one
+          exception is <code>place.geo</code>, which exists for landing sites that no identifier
+          system covers.
+        </p>
+        <p>
+          The flown track is excluded as well, and this is the one exclusion that people ask about
+          most. A single long-haul flight is ten to fifteen thousand ADS-B positions, and because
+          the AT Protocol data model has no floating point type, every latitude, longitude and
+          altitude has to be stored as a string. That is roughly a megabyte per flight, around a
+          hundred times the size of the record describing it.
+        </p>
+        <p>
+          A record carries <code>route</code> for the route as filed, which is compact and is
+          genuinely something the author asserts. For the track actually flown, the record already
+          carries what you need to find it: <code>icao24</code> together with a departure time is
+          exactly what a surveillance archive is queried with. Storing the track would duplicate a
+          measurement made by receivers into a repository of assertions made by a person.
+        </p>
+      </section>
+
+      <section>
+        <h2>Times and time zones</h2>
+        <p>
+          Contrail defines eight timestamps, following the standard out, off, on and in convention,
+          each with a scheduled and an actual variant. All of them are optional. A general aviation
+          record will often carry only a takeoff and a landing.
+        </p>
+        <p>
+          Every timestamp is written with an explicit UTC offset and no fractional seconds. The
+          Lexicon specification notes two round tripping ambiguities for datetimes, one involving
+          lost precision and one involving trailing fractional second zeros, and a fixed convention
+          avoids both.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Contrail is a proposal. The lexicons are the substance of it, and the importer exists to
+        demonstrate that the schema works and to give people a reason to write records with it.
+      </p>
+    </footer>
+
+  </body>
+</html>

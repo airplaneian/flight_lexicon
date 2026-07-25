@@ -12,6 +12,26 @@ import { fileURLToPath } from 'node:url'
 const LEXICONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../lexicons/com/airplaneian/contrail/temp')
 const FILES = ['flight', 'trip', 'defs']
 const PLACEHOLDER = '<!--LEXICON_DEFINITIONS-->'
+const NAV_PLACEHOLDER = '<!--NAV-->'
+
+const NAV_LINKS = [
+  { href: '/', label: 'Contrail', mark: true },
+  { href: '/docs/', label: 'Documentation' },
+  { href: '/import/', label: 'Importer demo' },
+]
+
+/** One nav, injected into every page, so three copies cannot drift apart. */
+function renderNav(pathname) {
+  const link = ({ href, label, mark }) => {
+    const current = href === pathname ? ' aria-current="page"' : ''
+    return `<a href="${href}" class="${mark ? 'topnav-mark' : 'topnav-link'}"${current}>${label}</a>`
+  }
+  const [mark, ...rest] = NAV_LINKS
+  return (
+    `<nav class="topnav">${link(mark)}` +
+    `<div class="topnav-links">${rest.map(link).join('')}</div></nav>`
+  )
+}
 
 const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -130,7 +150,10 @@ export function lexiconDocs() {
     name: 'contrail-lexicon-docs',
     transformIndexHtml: {
       order: 'pre',
-      handler(html) {
+      handler(html, ctx) {
+        // ctx.path is '/index.html', '/docs/index.html', etc.
+        const pathname = (ctx?.path ?? '/index.html').replace(/index\.html$/, '')
+        html = html.replace(NAV_PLACEHOLDER, renderNav(pathname))
         if (!html.includes(PLACEHOLDER)) return html
 
         const docs = FILES.map((f) => JSON.parse(readFileSync(`${LEXICONS}/${f}.json`, 'utf8')))
