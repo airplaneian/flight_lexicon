@@ -3,72 +3,63 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Contrail — a flight record lexicon for atproto</title>
+    <title>Contrail: an aviation schema for every flight</title>
     <meta
       name="description"
-      content="An AT Protocol lexicon for flight records, and a browser-only tool that imports a Flighty export into your own repository."
+      content="Contrail is a set of AT Protocol lexicons for describing flights, with a browser-only demo that imports a Flighty export into your own repository."
     />
     <link rel="stylesheet" href="/src/styles.css" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>" />
   </head>
   <body>
     <header class="masthead">
-      <h1>Contrail</h1>
+      <p class="wordmark">Contrail</p>
+      <h1>An aviation schema for every flight</h1>
       <p class="standfirst">
-        An AT Protocol lexicon for flight records — and a tool that writes some, so you can see
-        what it looks like in use.
+        Contrail is a simple set of lexicons for the AT Protocol to describe flights. It provides a
+        common structure to support building compelling aviation-centric experiences on the
+        ATmosphere.
+      </p>
+      <p class="cta">
+        To get started, <a href="#definitions">view the definitions</a> or
+        <a href="#import">try creating some records</a> using the Flighty importer demo.
       </p>
     </header>
 
     <main>
       <section>
-        <h2>What the record says</h2>
+        <h2>Introduction</h2>
         <p>
-          A flight record asserts that <em>a particular flight existed</em>. That is all. It is not
-          a log entry about you, and it does not claim you were aboard.
+          Contrail is a proposal to provide lexicons to describe flight segments. A contrail record
+          merely asserts that a particular flight existed, additional optional fields exist to
+          provide context. For instance, a user's connection to a particular flight (i.e. as a
+          passenger or pilot) is entirely optional. In fact, the only mandatory field required is
+          <code>createdAt</code>. This is the most important property of the schema and everything
+          else follows from it.
         </p>
         <p>
-          Your connection to the flight — passenger, pilot, student, observer — rides along as an
-          optional <code>relationship</code> field. Leave it off and the record makes no claim
-          either way, which is exactly what you want when the record came from ADS-B data about
-          somebody else's aircraft.
+          An absent field means the value is unknown or does not apply. It never means zero, empty,
+          or none, and the schema defines no placeholder values. A record describing a flight where
+          only the date and the tail number are known is as valid as one with every field
+          populated. Tools that require complete data should enforce that requirement themselves,
+          since the schema cannot do so without excluding general aviation, where most of the
+          commercial fields have no meaning.
         </p>
         <p>
-          This split follows the pattern
-          <a href="https://smokesignal.events">Smoke Signal</a> uses for events and RSVPs: the
-          event record says a thing exists, and attendance is a separate claim. Here the claim is
-          a field rather than a second record, but the framing is the same.
-        </p>
-      </section>
-
-      <section>
-        <h2>Only one field is required</h2>
-        <p>
-          <code>createdAt</code>, and nothing else. This is the most important property of the
-          schema and everything else follows from it.
-        </p>
-        <p>
-          <strong>Absent means unknown or not applicable.</strong> Never zero, never an empty
-          string, never a placeholder. A flight where you know only the date and the tail number is
-          a valid record. So is one with all thirty fields filled.
-        </p>
-        <p>
-          A tool that wants complete data should reject incomplete input itself. The schema cannot
-          do that job, and pretending otherwise would make it useless for general aviation, where
-          most of the commercial fields are meaningless.
-        </p>
-        <p class="aside">
-          The one exception: absent <code>relationship</code> means <em>no claim is being made</em>,
-          not that the relationship is unknown.
+          The <code>relationship</code> field is the one exception to this rule. When it is absent,
+          no claim is being made about the author's involvement, rather than the claim being
+          unknown. A record created from ADS-B data about another operator's aircraft simply omits
+          it.
         </p>
       </section>
 
       <section>
-        <h2>Two flights, both valid</h2>
+        <h2>Records for every kind of flying</h2>
         <p>
-          A widebody on a transpacific sector and a Super Cub flying circuits at a grass strip are
-          the same kind of record. The second one has no flight number, no airline, and no airport
-          code — and it is still complete.
+          Contrail is intended to accommodate commercial airline travel and general aviation
+          equally. A widebody operating a transpacific sector and a Super Cub flying circuits at a
+          grass strip are described by the same record type. The second has no flight number, no
+          airline, and no airport code, and it is still complete.
         </p>
         <div class="examples">
           <figure>
@@ -124,23 +115,23 @@
           </figure>
         </div>
         <p class="aside">
-          Origin and destination are the same place. Local flights are ordinary and the schema
-          treats them as such.
+          Note that the origin and destination in the general aviation example are the same place.
+          Local flights are ordinary and the schema treats them as such.
         </p>
       </section>
 
       <section>
-        <h2>Everyone writes their own copy</h2>
+        <h2>Identifying flights across repositories</h2>
         <p>
-          Because the record is about the flight rather than about the author, several people on
-          the same aeroplane will each write a record describing it. None of them is canonical.
-          That duplication is expected and by design — there is no authority that could issue a
-          global flight identifier, so the schema does not pretend one exists.
+          Because a record describes the flight rather than the author, several people aboard the
+          same aircraft may each write a record for it. None of these is canonical, and Contrail
+          treats that duplication as expected. It does not attempt to define a global flight
+          identifier, because no authority exists to issue one.
         </p>
         <p>
-          It does mean readers need to recognise two repositories describing one flight, so the
-          identity fields carry more weight than they would in a personal-log model. Write them
-          consistently:
+          This does mean readers need some way to recognise two repositories describing the same
+          flight, so the identifying fields carry more weight here than they would in a personal
+          logbook. Write them consistently wherever they are known.
         </p>
         <table class="keys">
           <tbody>
@@ -155,100 +146,104 @@
           </tbody>
         </table>
         <p>
-          <code>operatingAirline</code> is the ICAO designator — <code>UAL</code>, not
-          <code>UA</code>. IATA airline codes get recycled between carriers, which makes a
-          historical record tagged with one ambiguous.
-          <code>registration</code> is uppercase with no hyphens, so <code>G-VBOW</code> and
-          <code>GVBOW</code> do not become two aircraft.
+          The <code>operatingAirline</code> field takes the ICAO designator (<code>UAL</code>)
+          rather than the IATA code (<code>UA</code>). IATA airline codes are reassigned between
+          carriers over time, which makes a historical record tagged with one ambiguous.
+          Registrations are written in uppercase with no hyphens, so that <code>G-VBOW</code> and
+          <code>GVBOW</code> do not describe two different aircraft.
         </p>
       </section>
 
       <section>
-        <h2>What the schema leaves out</h2>
+        <h2>What Contrail leaves out</h2>
         <p>
-          <strong>Duration, distance, great-circle miles.</strong> All derivable from the times and
-          places already in the record. Storing them guarantees that records written by different
-          tools disagree with each other.
+          Duration, distance, and great circle mileage are all derivable from the times and places
+          already present in a record. Storing them would guarantee that records written by
+          different tools eventually disagree with each other.
         </p>
         <p>
-          <strong>Airport names, coordinates, elevations.</strong> Reference data about the world,
-          not an assertion by the author. It does not belong in anybody's repository. The only
-          exception is <code>place.geo</code>, for landing sites that no identifier system covers.
-        </p>
-        <p>
-          <strong>A global flight ID.</strong> No authority exists to issue one.
+          Airport names, coordinates, and elevations are reference data about the world rather than
+          assertions by the author, so they do not belong in a personal repository. The one
+          exception is <code>place.geo</code>, which exists for landing sites that no identifier
+          system covers.
         </p>
       </section>
 
       <section>
-        <h2>Times carry offsets</h2>
+        <h2>Times and time zones</h2>
         <p>
-          Eight timestamps, the standard out/off/on/in set, each scheduled and actual. All
-          optional — a general aviation record will usually have a takeoff and a landing and
-          nothing else.
+          Contrail defines eight timestamps, following the standard out, off, on and in convention,
+          each with a scheduled and an actual variant. All of them are optional. A general aviation
+          record will often carry only a takeoff and a landing.
         </p>
         <p>
-          Every one is written with an explicit UTC offset and no fractional seconds. The Lexicon
-          specification flags two round-tripping ambiguities for datetimes — lost precision, and
-          trailing fractional-second zeroes — and a fixed convention avoids both.
+          Every timestamp is written with an explicit UTC offset and no fractional seconds. The
+          Lexicon specification notes two round tripping ambiguities for datetimes, one involving
+          lost precision and one involving trailing fractional second zeros, and a fixed convention
+          avoids both.
         </p>
       </section>
 
       <hr />
 
       <section id="import">
-        <h2>Try it</h2>
+        <h2>Flighty importer demo</h2>
         <p>
-          This imports a <a href="https://flighty.com">Flighty</a> CSV export into your own
-          repository as flight records. It runs entirely in this page: your file is parsed in the
-          browser and never uploaded anywhere. There is no server to upload it to.
+          The demo below imports a <a href="https://flighty.com">Flighty</a> CSV export into your
+          repository as Contrail records. It runs entirely in this page. Your file is parsed in the
+          browser and is never uploaded, because there is no server to upload it to.
         </p>
 
         <div class="warning" role="note">
           <h3>Before you write anything</h3>
           <p>
-            A complete flight history is a movement history. Once these records are in your
-            repository they are public and permanent, and anyone can read from them where you are
+            A complete flight history is also a movement history. Once these records are in your
+            repository they are public and permanent, and a reader can work out where you are
             based, how often you travel, and when you are away from home.
           </p>
           <p>
-            This is true regardless of what the records claim. The <code>relationship</code> field
-            being optional does not change it — records about flights sitting in <em>your</em>
+            This holds regardless of what the records claim. The <code>relationship</code> field
+            being optional does not change it, because records about flights sitting in your
             repository disclose your connection to those flights either way.
           </p>
         </div>
 
         <div id="app">
-          <noscript><p class="aside">The importer needs JavaScript. The rest of this page does not.</p></noscript>
+          <noscript>
+            <p class="aside">The importer needs JavaScript. The rest of this page does not.</p>
+          </noscript>
         </div>
       </section>
 
-      <section>
-        <h2>The schemas</h2>
+      <section id="definitions">
+        <h2>Definitions</h2>
         <p>
-          Published to
+          The following schemas are published to
           <a href="https://pdsls.dev/at://did:plc:5jsivedaksbcc4n2epiegflk/com.atproto.lexicon.schema"
             >did:plc:5jsivedaksbcc4n2epiegflk</a
           >
-          and resolvable by NSID.
+          and resolve by NSID.
         </p>
         <ul class="schemas">
-          <li><code>com.airplaneian.contrail.temp.flight</code> — the record</li>
-          <li><code>com.airplaneian.contrail.temp.trip</code> — groups flights into a journey</li>
-          <li><code>com.airplaneian.contrail.temp.defs</code> — the shared <code>place</code> definition</li>
+          <li><code>com.airplaneian.contrail.temp.flight</code>, the flight record itself</li>
+          <li><code>com.airplaneian.contrail.temp.trip</code>, which groups flights into a journey</li>
+          <li>
+            <code>com.airplaneian.contrail.temp.defs</code>, holding the shared
+            <code>place</code> definition
+          </li>
         </ul>
         <p class="aside">
-          These are under a <code>temp</code> namespace while the shape settles. Published lexicon
-          constraints can never be loosened, so the stable names are not claimed until real data
-          has been through them.
+          These are currently published under a <code>temp</code> namespace while the shape
+          settles. Published lexicon constraints can never be loosened afterwards, so the stable
+          names will not be claimed until real data has been through them.
         </p>
       </section>
     </main>
 
     <footer>
       <p>
-        Contrail is a demonstration. The lexicon is the point; this tool exists to prove the schema
-        works and to give people a reason to write records with it.
+        Contrail is a proposal. The lexicons are the substance of it, and the importer exists to
+        demonstrate that the schema works and to give people a reason to write records with it.
       </p>
     </footer>
 

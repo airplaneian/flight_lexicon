@@ -76,7 +76,7 @@ function signInForm(): Node {
     el('div', { class: 'row' }, input, el('button', { type: 'submit' }, 'Sign in')),
     el('p', { class: 'aside' },
       'Contrail asks for permission to create and update records in its two collections. ' +
-      'Nothing else — not delete, not your posts, not your account.'),
+      'Nothing else. Not delete, not your posts, not your account.'),
   )
   form.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -198,9 +198,9 @@ function flightRow(f: ParsedFlight): Node {
 
   const tr = el('tr', state.excluded.has(f.row) ? { class: 'excluded' } : {},
     el('td', {}, box),
-    el('td', {}, el('strong', {}, airline || '—'), el('br'), el('span', { class: 'muted' }, route)),
+    el('td', {}, el('strong', {}, airline || '\u2014'), el('br'), el('span', { class: 'muted' }, route)),
     el('td', { class: 'mono' }, departs.replace('T', ' ').slice(0, 16)),
-    el('td', {}, (r.registration as string) ?? '—', el('br'),
+    el('td', {}, (r.registration as string) ?? '\u2014', el('br'),
       el('span', { class: 'muted' }, (r.aircraftType as string) ?? '')),
     notes)
   return tr
@@ -220,7 +220,7 @@ const issueLabel = (kind: string) => ISSUE_LABELS[kind] ?? kind
 function progressPanel(): Node {
   const p = state.progress
   return el('div', { class: 'panel' },
-    el('p', {}, p ? `${p.label} — ${p.done} of ${p.total}` : 'Starting…'),
+    el('p', {}, p ? `${p.label}: ${p.done} of ${p.total}` : 'Starting…'),
     el('progress', p ? { value: String(p.done), max: String(p.total) } : {}))
 }
 

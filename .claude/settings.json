@@ -46,7 +46,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5173/src/styles.css)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5173/src/main.ts)",
       "Bash(sed -i '' \"/^import '.\\\\/styles.css'$/d; /^$/{ /^$/d; }\" src/main.ts)",
-      "Bash(dig +short TXT _lexicon.temp.contrail.airplaneian.com @1.1.1.1)"
+      "Bash(dig +short TXT _lexicon.temp.contrail.airplaneian.com @1.1.1.1)",
+      "Bash(cd /Users/iservin/Documents/flight_lexicon/app *)",
+      "Read(//Users/iservin/Documents/lexicons/com/airplaneian/contrail/**)",
+      "Bash(python3 -)"
     ]
   }
 }
