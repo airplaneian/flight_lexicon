@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contrail — a flight record lexicon for atproto</title>
+    <meta
+      name="description"
+      content="An AT Protocol lexicon for flight records, and a browser-only tool that imports a Flighty export into your own repository."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>" />
+  </head>
+  <body>
+    <header class="masthead">
+      <h1>Contrail</h1>
+      <p class="standfirst">
+        An AT Protocol lexicon for flight records — and a tool that writes some, so you can see
+        what it looks like in use.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>What the record says</h2>
+        <p>
+          A flight record asserts that <em>a particular flight existed</em>. That is all. It is not
+          a log entry about you, and it does not claim you were aboard.
+        </p>
+        <p>
+          Your connection to the flight — passenger, pilot, student, observer — rides along as an
+          optional <code>relationship</code> field. Leave it off and the record makes no claim
+          either way, which is exactly what you want when the record came from ADS-B data about
+          somebody else's aircraft.
+        </p>
+        <p>
+          This split follows the pattern
+          <a href="https://smokesignal.events">Smoke Signal</a> uses for events and RSVPs: the
+          event record says a thing exists, and attendance is a separate claim. Here the claim is
+          a field rather than a second record, but the framing is the same.
+        </p>
+      </section>
+
+      <section>
+        <h2>Only one field is required</h2>
+        <p>
+          <code>createdAt</code>, and nothing else. This is the most important property of the
+          schema and everything else follows from it.
+        </p>
+        <p>
+          <strong>Absent means unknown or not applicable.</strong> Never zero, never an empty
+          string, never a placeholder. A flight where you know only the date and the tail number is
+          a valid record. So is one with all thirty fields filled.
+        </p>
+        <p>
+          A tool that wants complete data should reject incomplete input itself. The schema cannot
+          do that job, and pretending otherwise would make it useless for general aviation, where
+          most of the commercial fields are meaningless.
+        </p>
+        <p class="aside">
+          The one exception: absent <code>relationship</code> means <em>no claim is being made</em>,
+          not that the relationship is unknown.
+        </p>
+      </section>
+
+      <section>
+        <h2>Two flights, both valid</h2>
+        <p>
+          A widebody on a transpacific sector and a Super Cub flying circuits at a grass strip are
+          the same kind of record. The second one has no flight number, no airline, and no airport
+          code — and it is still complete.
+        </p>
+        <div class="examples">
+          <figure>
+            <figcaption>Commercial</figcaption>
+            <pre><code>{
+  "$type": "com.airplaneian.contrail.temp.flight",
+  "createdAt": "2026-07-25T09:14:00-07:00",
+  "date": "2025-07-13",
+  "origin": { "iata": "SFO", "terminal": "INTL", "gate": "A2" },
+  "destination": { "iata": "LHR", "terminal": "3" },
+  "operatingAirline": "VIR",
+  "flightNumber": "20",
+  "marketingAirline": "DAL",
+  "marketingFlightNumber": "5964",
+  "registration": "GVBOW",
+  "aircraftType": "Boeing 787-9",
+  "actualGateDeparture": "2025-07-13T15:57:00-07:00",
+  "actualTakeoff":       "2025-07-13T16:25:00-07:00",
+  "actualLanding":       "2025-07-14T10:14:00+01:00",
+  "actualGateArrival":   "2025-07-14T10:23:00+01:00",
+  "relationship": "passenger",
+  "seat": "46K",
+  "status": "normal",
+  "source": "flighty",
+  "sourceId": "bef37d51-2876-433b-bffd-95c81f8fe569"
+}</code></pre>
+          </figure>
+          <figure>
+            <figcaption>General aviation</figcaption>
+            <pre><code>{
+  "$type": "com.airplaneian.contrail.temp.flight",
+  "createdAt": "2026-07-25T09:14:00-07:00",
+  "date": "2026-07-19",
+  "origin": {
+    "name": "Twin Oaks Airpark",
+    "faaLid": "7S3",
+    "geo": { "latitude": "45.42361", "longitude": "-122.94028" }
+  },
+  "destination": {
+    "name": "Twin Oaks Airpark",
+    "faaLid": "7S3",
+    "geo": { "latitude": "45.42361", "longitude": "-122.94028" }
+  },
+  "registration": "N12345",
+  "icao24": "a1b2c3",
+  "icaoTypeDesignator": "PA18",
+  "aircraftType": "Piper PA-18 Super Cub",
+  "actualTakeoff": "2026-07-19T10:12:00-07:00",
+  "actualLanding": "2026-07-19T10:58:00-07:00",
+  "relationship": "pic",
+  "source": "manual"
+}</code></pre>
+          </figure>
+        </div>
+        <p class="aside">
+          Origin and destination are the same place. Local flights are ordinary and the schema
+          treats them as such.
+        </p>
+      </section>
+
+      <section>
+        <h2>Everyone writes their own copy</h2>
+        <p>
+          Because the record is about the flight rather than about the author, several people on
+          the same aeroplane will each write a record describing it. None of them is canonical.
+          That duplication is expected and by design — there is no authority that could issue a
+          global flight identifier, so the schema does not pretend one exists.
+        </p>
+        <p>
+          It does mean readers need to recognise two repositories describing one flight, so the
+          identity fields carry more weight than they would in a personal-log model. Write them
+          consistently:
+        </p>
+        <table class="keys">
+          <tbody>
+            <tr>
+              <th scope="row">Commercial</th>
+              <td><code>date</code> + <code>operatingAirline</code> + <code>flightNumber</code></td>
+            </tr>
+            <tr>
+              <th scope="row">General aviation</th>
+              <td><code>icao24</code> + <code>actualTakeoff</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <code>operatingAirline</code> is the ICAO designator — <code>UAL</code>, not
+          <code>UA</code>. IATA airline codes get recycled between carriers, which makes a
+          historical record tagged with one ambiguous.
+          <code>registration</code> is uppercase with no hyphens, so <code>G-VBOW</code> and
+          <code>GVBOW</code> do not become two aircraft.
+        </p>
+      </section>
+
+      <section>
+        <h2>What the schema leaves out</h2>
+        <p>
+          <strong>Duration, distance, great-circle miles.</strong> All derivable from the times and
+          places already in the record. Storing them guarantees that records written by different
+          tools disagree with each other.
+        </p>
+        <p>
+          <strong>Airport names, coordinates, elevations.</strong> Reference data about the world,
+          not an assertion by the author. It does not belong in anybody's repository. The only
+          exception is <code>place.geo</code>, for landing sites that no identifier system covers.
+        </p>
+        <p>
+          <strong>A global flight ID.</strong> No authority exists to issue one.
+        </p>
+      </section>
+
+      <section>
+        <h2>Times carry offsets</h2>
+        <p>
+          Eight timestamps, the standard out/off/on/in set, each scheduled and actual. All
+          optional — a general aviation record will usually have a takeoff and a landing and
+          nothing else.
+        </p>
+        <p>
+          Every one is written with an explicit UTC offset and no fractional seconds. The Lexicon
+          specification flags two round-tripping ambiguities for datetimes — lost precision, and
+          trailing fractional-second zeroes — and a fixed convention avoids both.
+        </p>
+      </section>
+
+      <hr />
+
+      <section id="import">
+        <h2>Try it</h2>
+        <p>
+          This imports a <a href="https://flighty.com">Flighty</a> CSV export into your own
+          repository as flight records. It runs entirely in this page: your file is parsed in the
+          browser and never uploaded anywhere. There is no server to upload it to.
+        </p>
+
+        <div class="warning" role="note">
+          <h3>Before you write anything</h3>
+          <p>
+            A complete flight history is a movement history. Once these records are in your
+            repository they are public and permanent, and anyone can read from them where you are
+            based, how often you travel, and when you are away from home.
+          </p>
+          <p>
+            This is true regardless of what the records claim. The <code>relationship</code> field
+            being optional does not change it — records about flights sitting in <em>your</em>
+            repository disclose your connection to those flights either way.
+          </p>
+        </div>
+
+        <div id="app">
+          <noscript><p class="aside">The importer needs JavaScript. The rest of this page does not.</p></noscript>
+        </div>
+      </section>
+
+      <section>
+        <h2>The schemas</h2>
+        <p>
+          Published to
+          <a href="https://pdsls.dev/at://did:plc:5jsivedaksbcc4n2epiegflk/com.atproto.lexicon.schema"
+            >did:plc:5jsivedaksbcc4n2epiegflk</a
+          >
+          and resolvable by NSID.
+        </p>
+        <ul class="schemas">
+          <li><code>com.airplaneian.contrail.temp.flight</code> — the record</li>
+          <li><code>com.airplaneian.contrail.temp.trip</code> — groups flights into a journey</li>
+          <li><code>com.airplaneian.contrail.temp.defs</code> — the shared <code>place</code> definition</li>
+        </ul>
+        <p class="aside">
+          These are under a <code>temp</code> namespace while the shape settles. Published lexicon
+          constraints can never be loosened, so the stable names are not claimed until real data
+          has been through them.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Contrail is a demonstration. The lexicon is the point; this tool exists to prove the schema
+        works and to give people a reason to write records with it.
+      </p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

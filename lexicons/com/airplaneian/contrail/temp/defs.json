@@ -1,0 +1,47 @@
+{
+  "lexicon": 1,
+  "id": "com.airplaneian.contrail.temp.defs",
+  "defs": {
+    "place": {
+      "type": "object",
+      "description": "An airport, airfield, or landing site referenced by a flight record. Every field is optional, and absent always means unknown or not applicable -- never zero, empty, or a placeholder. A grass strip with no published identifier is a valid place carrying only 'name' and 'geo'; a major international airport may carry every field. Identifier fields should be written whenever they are known, because readers reconciling records of the same flight written by different people match on them. Prefer 'icao' as the primary identifier where a place has one, since IATA codes are reassigned over time and many airfields have no IATA code at all. Never invent, translate, or derive an identifier the source did not supply: an absent code is always better than a wrong one. This def describes a place only as far as a flight record needs to; it is not a general-purpose airport reference entry, and details about the world such as elevation, runway layout, or operating hours do not belong here.",
+      "properties": {
+        "icao": {
+          "type": "string",
+          "description": "ICAO location indicator, four characters, uppercase. For example 'KOAK' for Oakland or 'EGLL' for Heathrow. Preferred over 'iata' for cross-repository matching because ICAO indicators are globally unique and are not reassigned. Many small airfields have none; omit the field rather than guessing.",
+          "maxLength": 8
+        },
+        "iata": {
+          "type": "string",
+          "description": "IATA location code, three characters, uppercase. For example 'OAK'. Absent for the great majority of general aviation fields. Note that IATA codes are reassigned between airports over time, so a code alone does not identify a place across decades -- pair it with 'icao' or 'geo' where possible.",
+          "maxLength": 8
+        },
+        "faaLid": {
+          "type": "string",
+          "description": "FAA Location Identifier, for United States airfields that have one. For example '1G5'. Many US public-use fields have an FAA LID and no ICAO indicator at all, which is why this is a separate field rather than a fallback written into 'icao'.",
+          "maxLength": 8
+        },
+        "name": {
+          "type": "string",
+          "description": "Free-text name of the place, for landing sites that no identifier system covers: grass strips, private fields, off-airport landings, water landings. Also useful as a human-readable label alongside a code. Carries no matching guarantees -- two records may name the same field differently.",
+          "maxLength": 256
+        },
+        "geo": {
+          "type": "ref",
+          "ref": "community.lexicon.location.geo",
+          "description": "Coordinates of the place, for landing sites that no identifier system covers, or to disambiguate an ambiguous name. Note that the referenced def requires both latitude and longitude, expressed as decimal-degree strings referenced to WGS84 -- see the community.lexicon.location documentation for the coordinate conventions. Do not write coordinates that were merely looked up from an identifier already present in this object; that is reference data about the world, not an assertion about this flight."
+        },
+        "terminal": {
+          "type": "string",
+          "description": "Terminal used by this particular flight at this place, as free text -- terminal naming is entirely carrier- and airport-specific ('3', 'B', 'Main', 'INTL'). This describes how this flight was handled, not a property of the place itself, which is why it lives here rather than in any airport reference dataset.",
+          "maxLength": 32
+        },
+        "gate": {
+          "type": "string",
+          "description": "Gate or stand used by this particular flight at this place, as free text ('C19', '44C', 'A2E'). As with 'terminal', this is a fact about this flight rather than about the place. Not applicable to most general aviation operations.",
+          "maxLength": 32
+        }
+      }
+    }
+  }
+}
