@@ -57,7 +57,12 @@
       "mcp__claude_ai_Spoor__query_adsb_tracks",
       "Bash(python3 -c ' *)",
       "Bash(xargs sed -i '' 's/operatingAirline/operator/g')",
-      "Bash(python3 -c \"import json,sys; print\\('trip records:', len\\(json.load\\(sys.stdin\\).get\\('records',[]\\)\\)\\)\")"
+      "Bash(python3 -c \"import json,sys; print\\('trip records:', len\\(json.load\\(sys.stdin\\).get\\('records',[]\\)\\)\\)\")",
+      "Bash(cat)",
+      "Bash(node /private/tmp/claude-501/-Users-iservin-Documents-flight-lexicon/741c8f8b-8b91-4a36-bfcf-dfdc5c9f915f/scratchpad/repro.mjs /private/tmp/claude-501/-Users-iservin-Documents-flight-lexicon/741c8f8b-8b91-4a36-bfcf-dfdc5c9f915f/scratchpad)",
+      "Bash(cp src/repo.ts /tmp/repo.bak)",
+      "Bash(sed -i '' 's|`${source}\\\\\\\\u0000${sourceId}`|`${source} ${sourceId}`|' src/repo.ts)",
+      "Bash(cp /tmp/repo.bak src/repo.ts)"
     ]
   }
 }

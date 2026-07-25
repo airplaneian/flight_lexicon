@@ -59,3 +59,47 @@ test('does not write a trip whose legs were excluded', () => {
   const only = buildTripRecord(trip, (x) => (x.record.sourceId === 'u1' ? 'at://did/c/u1' : undefined), 'now')
   assert.equal(only, undefined, 'one remaining leg is not a trip')
 })
+
+test('trips reference the flights just written, end to end', async () => {
+  // This mirrors the importer's two-phase write: flights first, then re-list to
+  // pick up server-assigned keys, then build trips from those URIs. The bug it
+  // guards against was a lookup key rebuilt by hand in the caller, which
+  // silently matched nothing and produced zero trips while flights wrote fine.
+  const { listAll, indexBySourceId, planWrites, executeWrites, sourceKey } = await import('../src/repo.ts')
+  const FLIGHT = 'com.airplaneian.contrail.temp.flight'
+
+  const store = new Map<string, { collection: string; uri: string; value: Record<string, unknown> }>()
+  let n = 0
+  const client = {
+    listRecords: async ({ collection }: { collection: string }) => ({
+      records: [...store.values()].filter((r) => r.collection === collection).map((r) => ({ uri: r.uri, value: r.value })),
+    }),
+    applyWrites: async ({ writes }: { writes: unknown[] }) => {
+      for (const w of writes as { collection: string; rkey?: string; value: Record<string, unknown> }[]) {
+        const rkey = w.rkey ?? `rk${++n}`
+        store.set(`${w.collection}/${rkey}`, {
+          collection: w.collection, uri: `at://did:plc:x/${w.collection}/${rkey}`, value: w.value,
+        })
+      }
+      return {}
+    },
+  }
+
+  const chosen = [
+    f(1, 'ABC123', 'u1', '2025-07-13', 'SFO', 'LHR'),
+    f(2, 'ABC123', 'u2', '2025-07-25', 'LHR', 'JFK'),
+  ]
+  chosen.forEach((c) => { c.record.source = 'flighty' })
+
+  const ops = planWrites(chosen.map((c) => c.record), indexBySourceId(await listAll(client, FLIGHT)), FLIGHT)
+  await executeWrites(client, ops)
+  assert.equal(ops.length, 2)
+
+  const written = indexBySourceId(await listAll(client, FLIGHT))
+  const [trip] = groupIntoTrips(chosen)
+  const record = buildTripRecord(trip, (x) => written.get(sourceKey('flighty', x.record.sourceId))?.uri, 'now')
+
+  assert.ok(record, 'a trip must be produced when both legs were written')
+  assert.equal(record.flights?.length, 2, 'both legs resolved to AT-URIs')
+  assert.ok(record.flights?.every((u) => u.startsWith('at://')), 'real URIs, not undefined')
+})

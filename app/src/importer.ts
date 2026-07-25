@@ -1,10 +1,10 @@
 import { Agent } from '@atproto/api'
 import type { OAuthSession } from '@atproto/oauth-client-browser'
 import { initAuth, signIn, signOut } from './auth.ts'
-import { parseFlightyCsv, FlightyParseError, nowIso, type ParsedFlight } from './flighty.ts'
+import { parseFlightyCsv, FlightyParseError, nowIso, SOURCE, type ParsedFlight } from './flighty.ts'
 import { groupIntoTrips, buildTripRecord } from './trips.ts'
 import { FLIGHT_NSID, TRIP_NSID, prune, type FlightRecord } from './lexicon.ts'
-import { listAll, indexBySourceId, planWrites, executeWrites, type RepoClient } from './repo.ts'
+import { listAll, indexBySourceId, planWrites, executeWrites, sourceKey, type RepoClient } from './repo.ts'
 
 interface State {
   phase: 'loading' | 'signedOut' | 'ready' | 'preview' | 'writing' | 'done'
@@ -551,7 +551,7 @@ async function doImport(): Promise<void> {
       const written = indexBySourceId(await listAll(client, FLIGHT_NSID))
       const createdAt = nowIso()
       const tripRecords = groups
-        .map((t) => buildTripRecord(t, (f) => written.get(`flighty ${effective(f).sourceId}`)?.uri, createdAt))
+        .map((t) => buildTripRecord(t, (f) => written.get(sourceKey(SOURCE, effective(f).sourceId))?.uri, createdAt))
         .filter((t): t is NonNullable<typeof t> => Boolean(t))
 
       if (tripRecords.length) {
