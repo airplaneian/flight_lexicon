@@ -2,23 +2,34 @@ import { Agent } from '@atproto/api'
 import type { OAuthSession } from '@atproto/oauth-client-browser'
 import { initAuth, signIn, signOut } from './auth.ts'
 import { parseFlightyCsv, FlightyParseError, nowIso, type ParsedFlight } from './flighty.ts'
-import { groupIntoTrips, buildTripRecord, type TripGroup } from './trips.ts'
-import { FLIGHT_NSID, TRIP_NSID } from './lexicon.ts'
+import { groupIntoTrips, buildTripRecord } from './trips.ts'
+import { FLIGHT_NSID, TRIP_NSID, prune, type FlightRecord } from './lexicon.ts'
 import { listAll, indexBySourceId, planWrites, executeWrites, type RepoClient } from './repo.ts'
 
 interface State {
   phase: 'loading' | 'signedOut' | 'ready' | 'preview' | 'writing' | 'done'
   session?: OAuthSession
   flights: ParsedFlight[]
-  trips: TripGroup[]
-  excluded: Set<number>
+  /** Nothing is written unless it is chosen. Empty by default, deliberately. */
+  selected: Set<number>
+  /** Per-row field overrides, applied on top of the parsed record. */
+  edits: Map<number, Record<string, string>>
+  filter: string
   includeTrips: boolean
   progress?: { done: number; total: number; label: string }
   result?: { created: number; updated: number; trips: number }
   error?: string
 }
 
-const state: State = { phase: 'loading', flights: [], trips: [], excluded: new Set(), includeTrips: true }
+const state: State = {
+  phase: 'loading',
+  flights: [],
+  selected: new Set(),
+  edits: new Map(),
+  filter: '',
+  includeTrips: true,
+}
+
 const root = document.getElementById('app')!
 
 const el = <K extends keyof HTMLElementTagNameMap>(
@@ -32,7 +43,35 @@ const el = <K extends keyof HTMLElementTagNameMap>(
   return node
 }
 
-const included = () => state.flights.filter((f) => !state.excluded.has(f.row))
+/** The record as it would be written: parsed values with any edits applied.
+ *  Clearing a field in the editor removes it, since absent means unknown. */
+function effective(f: ParsedFlight): FlightRecord {
+  const edits = state.edits.get(f.row)
+  if (!edits) return f.record
+  return prune({ ...f.record, ...edits }) as FlightRecord
+}
+
+const selectedFlights = () => state.flights.filter((f) => state.selected.has(f.row))
+
+function matchesFilter(f: ParsedFlight): boolean {
+  if (!state.filter) return true
+  const r = effective(f)
+  const hay = [
+    f.label, r.date, r.operator, r.operatorName, r.flightNumber, r.callsign,
+    r.registration, r.aircraftType, r.registeredOwner, r.status,
+    (r.origin as { iata?: string } | undefined)?.iata,
+    (r.destination as { iata?: string } | undefined)?.iata,
+  ].filter(Boolean).join(' ').toLowerCase()
+  return hay.includes(state.filter.toLowerCase())
+}
+
+const visibleFlights = () => state.flights.filter(matchesFilter)
+
+/** Trips are derived from the chosen flights, so a partly-selected booking
+ *  simply does not produce one. */
+const selectedTrips = () => groupIntoTrips(selectedFlights())
+
+// ---------------------------------------------------------------------------
 
 function render(): void {
   root.replaceChildren(...view())
@@ -40,9 +79,7 @@ function render(): void {
 
 function view(): Node[] {
   const nodes: Node[] = []
-  if (state.error) {
-    nodes.push(el('p', { class: 'error', role: 'alert' }, state.error))
-  }
+  if (state.error) nodes.push(el('p', { class: 'error', role: 'alert' }, state.error))
   switch (state.phase) {
     case 'loading':
       nodes.push(el('p', { class: 'muted' }, 'Checking for an existing session…'))
@@ -128,8 +165,9 @@ async function loadFile(file: File): Promise<void> {
     const flights = parseFlightyCsv(await file.text())
     if (!flights.length) throw new FlightyParseError('That export contains no flights.')
     state.flights = flights
-    state.trips = groupIntoTrips(flights)
-    state.excluded = new Set()
+    state.selected = new Set()
+    state.edits = new Map()
+    state.filter = ''
     state.phase = 'preview'
   } catch (err) {
     state.error =
@@ -138,72 +176,293 @@ async function loadFile(file: File): Promise<void> {
   render()
 }
 
+// --- preview ---------------------------------------------------------------
+//
+// Toggling a checkbox or typing in the editor must not rebuild the list: with
+// a few hundred rows that is slow, and it would destroy focus and caret
+// position mid-edit. Chrome and rows are updated in place instead.
+
+let listEl: HTMLElement | undefined
+let countEl: HTMLElement | undefined
+let writeBtn: HTMLButtonElement | undefined
+let tripNoteEl: HTMLElement | undefined
+let selectAllBtn: HTMLButtonElement | undefined
+const rowNodes = new Map<number, HTMLElement>()
+
 function previewPanel(): Node {
-  const rows = state.flights.map(flightRow)
-  const table = el('table', { class: 'preview' },
-    el('thead', {}, el('tr', {},
-      el('th', { scope: 'col' }, ''), el('th', { scope: 'col' }, 'Flight'),
-      el('th', { scope: 'col' }, 'Departs'), el('th', { scope: 'col' }, 'Aircraft'),
-      el('th', { scope: 'col' }, 'Notes'))),
-    el('tbody', {}, ...rows))
+  rowNodes.clear()
 
-  const count = included().length
-  const write = el('button', { type: 'button', class: 'primary' },
-    `Write ${count} flight${count === 1 ? '' : 's'} to my repository`)
-  if (!count) write.setAttribute('disabled', 'disabled')
-  write.addEventListener('click', doImport)
+  const search = el('input', {
+    type: 'text', class: 'search', placeholder: 'Filter by airline, route, registration, date…',
+    'aria-label': 'Filter flights', spellcheck: 'false',
+  }) as HTMLInputElement
+  search.value = state.filter
+  search.addEventListener('input', () => {
+    state.filter = search.value
+    applyFilter()
+    updateChrome()
+  })
 
-  const tripToggle = el('input', { type: 'checkbox', id: 'trips' })
-  if (state.includeTrips) tripToggle.setAttribute('checked', 'checked')
+  selectAllBtn = el('button', { type: 'button', class: 'small' }, 'Select all')
+  selectAllBtn.addEventListener('click', () => {
+    for (const f of visibleFlights()) state.selected.add(f.row)
+    syncCheckboxes()
+    updateChrome()
+  })
+
+  const selectNone = el('button', { type: 'button', class: 'small' }, 'Select none')
+  selectNone.addEventListener('click', () => {
+    state.selected.clear()
+    syncCheckboxes()
+    updateChrome()
+  })
+
+  countEl = el('p', { class: 'selcount' })
+
+  writeBtn = el('button', { type: 'button', class: 'primary' }, '')
+  writeBtn.addEventListener('click', doImport)
+
+  const tripToggle = el('input', { type: 'checkbox', id: 'trips' }) as HTMLInputElement
+  tripToggle.checked = state.includeTrips
   tripToggle.addEventListener('change', () => {
     state.includeTrips = tripToggle.checked
-    render()
+    updateChrome()
   })
+  tripNoteEl = el('span', {})
 
-  const tripCount = state.trips.length
-  const summary = el('div', { class: 'summary' },
-    el('p', {},
-      `${state.flights.length} flights found. `,
-      state.excluded.size ? `${state.excluded.size} excluded. ` : '',
-      `${count} will be written.`),
-    tripCount
-      ? el('label', { class: 'trips' }, tripToggle,
-          ` Also write ${tripCount} trip records, grouping legs booked together. ` +
-          'Booking references are used to work this out but are never written.')
-      : el('p', { class: 'aside' }, 'No multi-leg bookings found, so no trip records.'),
+  listEl = el('div', { class: 'flightlist' })
+  let year = ''
+  for (const f of state.flights) {
+    const y = String(f.record.date ?? '').slice(0, 4)
+    if (y && y !== year) {
+      year = y
+      listEl.append(el('div', { class: 'yearmark', 'data-year': y }, y))
+    }
+    const node = flightRow(f)
+    rowNodes.set(f.row, node)
+    listEl.append(node)
+  }
+
+  const panel = el('div', { class: 'panel' },
+    el('div', { class: 'toolbar' },
+      search,
+      el('div', { class: 'toolbar-actions' }, selectAllBtn, selectNone),
+    ),
+    countEl,
+    el('div', { class: 'scroll' }, listEl),
+    el('label', { class: 'trips' }, tripToggle, ' ', tripNoteEl),
+    writeBtn,
   )
-
-  return el('div', { class: 'panel' }, summary, el('div', { class: 'scroll' }, table), write)
+  applyFilter()
+  updateChrome()
+  return panel
 }
 
-function flightRow(f: ParsedFlight): Node {
-  const box = el('input', { type: 'checkbox', 'aria-label': `Include ${f.label}` })
-  if (!state.excluded.has(f.row)) box.setAttribute('checked', 'checked')
+function applyFilter(): void {
+  let shownInYear = new Map<string, number>()
+  for (const f of state.flights) {
+    const node = rowNodes.get(f.row)
+    if (!node) continue
+    const show = matchesFilter(f)
+    node.hidden = !show
+    const y = String(f.record.date ?? '').slice(0, 4)
+    if (show && y) shownInYear.set(y, (shownInYear.get(y) ?? 0) + 1)
+  }
+  // Hide a year marker with nothing under it.
+  for (const marker of listEl?.querySelectorAll<HTMLElement>('.yearmark') ?? []) {
+    marker.hidden = !shownInYear.get(marker.dataset.year ?? '')
+  }
+}
+
+function syncCheckboxes(): void {
+  for (const [row, node] of rowNodes) {
+    const box = node.querySelector<HTMLInputElement>('input[type=checkbox]')
+    if (box) box.checked = state.selected.has(row)
+    node.classList.toggle('picked', state.selected.has(row))
+  }
+}
+
+function updateChrome(): void {
+  const n = state.selected.size
+  const visible = visibleFlights().length
+  const total = state.flights.length
+
+  if (countEl) {
+    countEl.replaceChildren(
+      `${n} of ${total} flight${total === 1 ? '' : 's'} selected`,
+      state.filter ? ` · ${visible} match your filter` : '',
+      n === 0 ? ' · nothing will be written until you choose some' : '',
+    )
+  }
+  if (selectAllBtn) {
+    selectAllBtn.textContent = state.filter ? `Select all ${visible} matching` : 'Select all'
+    selectAllBtn.disabled = visible === 0
+  }
+
+  const groups = selectedTrips().length
+  const trips = state.includeTrips ? groups : 0
+  if (tripNoteEl) {
+    tripNoteEl.textContent =
+      `Also write trip records for legs booked together (${groups} from the current selection). ` +
+      'Booking references are read in the browser and never written.'
+  }
+  if (writeBtn) {
+    writeBtn.textContent = n
+      ? `Write ${n} flight${n === 1 ? '' : 's'}${trips ? ` and ${trips} trip${trips === 1 ? '' : 's'}` : ''} to my repository`
+      : 'Select at least one flight'
+    writeBtn.disabled = n === 0
+  }
+}
+
+function flightRow(f: ParsedFlight): HTMLElement {
+  const box = el('input', { type: 'checkbox', 'aria-label': `Select ${f.label}` }) as HTMLInputElement
+  box.checked = state.selected.has(f.row)
   box.addEventListener('change', () => {
-    if (box.checked) state.excluded.delete(f.row)
-    else state.excluded.add(f.row)
-    render()
+    if (box.checked) state.selected.add(f.row)
+    else state.selected.delete(f.row)
+    row.classList.toggle('picked', box.checked)
+    updateChrome()
   })
 
-  const r = f.record
-  const airline = [r.operator, r.flightNumber].filter(Boolean).join(' ')
-  const route = `${(r.origin as { iata?: string })?.iata ?? '?'} → ${(r.destination as { iata?: string })?.iata ?? '?'}`
-  const departs = (r.actualGateDeparture ?? r.scheduledGateDeparture ?? r.date ?? '') as string
+  const summary = el('div', { class: 'flight-summary' })
+  const badges = el('div', { class: 'flight-badges' })
 
-  const notes = el('td', {})
+  const editBtn = el('button', { type: 'button', class: 'small ghost' }, 'Edit')
+  const editor = el('div', { class: 'editor' })
+  editor.hidden = true
+  editBtn.addEventListener('click', () => {
+    if (editor.hidden) {
+      if (!editor.childElementCount) editor.append(buildEditor(f, summary, badges))
+      editor.hidden = false
+      editBtn.textContent = 'Done'
+    } else {
+      editor.hidden = true
+      editBtn.textContent = state.edits.has(f.row) ? 'Edited' : 'Edit'
+    }
+  })
+
+  const row = el('div', { class: 'flight' },
+    el('div', { class: 'flight-main' },
+      el('label', { class: 'flight-pick' }, box),
+      summary,
+      badges,
+      editBtn),
+    editor)
+  row.classList.toggle('picked', box.checked)
+  paintSummary(f, summary, badges)
+  return row
+}
+
+function paintSummary(f: ParsedFlight, summary: HTMLElement, badges: HTMLElement): void {
+  const r = effective(f)
+  const ident = [r.operator, r.flightNumber].filter(Boolean).join(' ') || r.callsign || '—'
+  const route = `${(r.origin as { iata?: string } | undefined)?.iata ?? '?'} → ${(r.destination as { iata?: string } | undefined)?.iata ?? '?'}`
+  const when = String(r.actualGateDeparture ?? r.scheduledGateDeparture ?? r.actualTakeoff ?? r.date ?? '')
+  const aircraft = [r.registration, r.aircraftType].filter(Boolean).join(' · ')
+
+  summary.replaceChildren(
+    el('div', { class: 'flight-ident' },
+      el('strong', {}, String(ident)), ' ', el('span', { class: 'muted' }, route)),
+    el('div', { class: 'flight-meta' },
+      el('span', { class: 'mono' }, when.replace('T', ' ').slice(0, 16)),
+      aircraft ? el('span', { class: 'muted' }, ` · ${aircraft}`) : ''),
+  )
+
+  badges.replaceChildren()
   for (const issue of f.issues) {
-    notes.append(el('span', { class: `badge ${issue.kind}`, title: issue.detail }, issueLabel(issue.kind)))
+    badges.append(el('span', { class: `badge ${issue.kind}`, title: issue.detail }, issueLabel(issue.kind)))
   }
-  if (r.status === 'cancelled') notes.append(el('span', { class: 'badge cancelled' }, 'cancelled'))
+  if (r.status === 'cancelled') badges.append(el('span', { class: 'badge cancelled' }, 'cancelled'))
+  if (state.edits.has(f.row)) badges.append(el('span', { class: 'badge edited' }, 'edited'))
+}
 
-  const tr = el('tr', state.excluded.has(f.row) ? { class: 'excluded' } : {},
-    el('td', {}, box),
-    el('td', {}, el('strong', {}, airline || '\u2014'), el('br'), el('span', { class: 'muted' }, route)),
-    el('td', { class: 'mono' }, departs.replace('T', ' ').slice(0, 16)),
-    el('td', {}, (r.registration as string) ?? '\u2014', el('br'),
-      el('span', { class: 'muted' }, (r.aircraftType as string) ?? '')),
-    notes)
-  return tr
+/** Fields safe to hand-edit. Timestamps are excluded on purpose: they carry
+ *  resolved UTC offsets, and editing the wall time without the offset is a
+ *  quiet way to publish the wrong instant. */
+const EDITABLE: { field: keyof FlightRecord; label: string }[] = [
+  { field: 'date', label: 'Date' },
+  { field: 'callsign', label: 'Callsign' },
+  { field: 'operator', label: 'Operator (ICAO)' },
+  { field: 'operatorName', label: 'Operator name' },
+  { field: 'flightNumber', label: 'Flight number' },
+  { field: 'marketingAirline', label: 'Marketing airline' },
+  { field: 'marketingFlightNumber', label: 'Marketing number' },
+  { field: 'registration', label: 'Registration' },
+  { field: 'registeredOwner', label: 'Registered owner' },
+  { field: 'aircraftType', label: 'Aircraft type' },
+  { field: 'icaoTypeDesignator', label: 'Type designator' },
+  { field: 'icao24', label: 'ICAO 24-bit address' },
+  { field: 'seat', label: 'Seat' },
+  { field: 'cabin', label: 'Cabin' },
+  { field: 'relationship', label: 'Relationship' },
+  { field: 'status', label: 'Status' },
+]
+
+const TIME_FIELDS: (keyof FlightRecord)[] = [
+  'actualGateDeparture', 'actualTakeoff', 'actualLanding', 'actualGateArrival',
+]
+
+function buildEditor(f: ParsedFlight, summary: HTMLElement, badges: HTMLElement): Node {
+  const grid = el('div', { class: 'editor-grid' })
+
+  const onChange = (field: string, value: string) => {
+    const edits = state.edits.get(f.row) ?? {}
+    const original = String((f.record as Record<string, unknown>)[field] ?? '')
+    if (value === original) delete edits[field]
+    else edits[field] = value
+    if (Object.keys(edits).length) state.edits.set(f.row, edits)
+    else state.edits.delete(f.row)
+    paintSummary(f, summary, badges)
+    updateChrome()
+  }
+
+  for (const { field, label } of EDITABLE) {
+    const current = String((effective(f) as Record<string, unknown>)[field] ?? '')
+    const input = el('input', { type: 'text', spellcheck: 'false' }) as HTMLInputElement
+    input.value = current
+    input.addEventListener('input', () => onChange(field as string, input.value.trim()))
+    grid.append(el('label', { class: 'editor-field' }, el('span', {}, label), input))
+  }
+
+  const notes = el('textarea', { rows: '2', placeholder: 'Public and permanent once written' }) as HTMLTextAreaElement
+  notes.value = String((effective(f) as Record<string, unknown>)['notes'] ?? '')
+  notes.addEventListener('input', () => onChange('notes', notes.value))
+
+  const r = effective(f)
+  const times = TIME_FIELDS.filter((t) => r[t]).map((t) =>
+    el('div', { class: 'editor-time' }, el('span', {}, String(t).replace('actual', '')), el('code', {}, String(r[t]))))
+
+  const issues = f.issues.length
+    ? el('ul', { class: 'editor-issues' }, ...f.issues.map((i) => el('li', {}, i.detail)))
+    : ''
+
+  const reset = el('button', { type: 'button', class: 'small ghost' }, 'Undo edits')
+  reset.addEventListener('click', () => {
+    state.edits.delete(f.row)
+    for (const input of grid.querySelectorAll('input')) {
+      const label = input.closest('.editor-field')?.querySelector('span')?.textContent
+      const spec = EDITABLE.find((e) => e.label === label)
+      if (spec) input.value = String((f.record as Record<string, unknown>)[spec.field] ?? '')
+    }
+    notes.value = String((f.record as Record<string, unknown>)['notes'] ?? '')
+    paintSummary(f, summary, badges)
+    updateChrome()
+  })
+
+  return el('div', {},
+    issues,
+    grid,
+    el('label', { class: 'editor-field wide' }, el('span', {}, 'Notes'), notes),
+    times.length
+      ? el('div', { class: 'editor-times' },
+          el('span', { class: 'editor-times-label' }, 'Times, as resolved'), ...times)
+      : '',
+    el('p', { class: 'aside' },
+      'Timestamps cannot be edited here. They carry the UTC offset that was in force at that ' +
+      'airport on that date, and changing the clock time alone would publish the wrong instant. ' +
+      'Clearing a field removes it from the record, since absent means unknown.'),
+    reset,
+  )
 }
 
 const ISSUE_LABELS: Record<string, string> = {
@@ -230,7 +489,8 @@ function resultPanel(): Node {
   again.addEventListener('click', () => {
     state.phase = 'ready'
     state.flights = []
-    state.trips = []
+    state.selected = new Set()
+    state.edits = new Map()
     state.result = undefined
     render()
   })
@@ -250,9 +510,12 @@ function resultPanel(): Node {
 
 async function doImport(): Promise<void> {
   if (!state.session) return
+  const chosen = selectedFlights()
+  if (!chosen.length) return
+
   state.phase = 'writing'
   state.error = undefined
-  state.progress = { done: 0, total: included().length, label: 'Checking for existing records' }
+  state.progress = { done: 0, total: chosen.length, label: 'Checking for existing records' }
   render()
 
   const agent = new Agent(state.session)
@@ -270,10 +533,8 @@ async function doImport(): Promise<void> {
   }
 
   try {
-    const existing = await listAll(client, FLIGHT_NSID)
-    const index = indexBySourceId(existing)
-    const chosen = included()
-    const ops = planWrites(chosen.map((f) => f.record), index, FLIGHT_NSID)
+    const index = indexBySourceId(await listAll(client, FLIGHT_NSID))
+    const ops = planWrites(chosen.map(effective), index, FLIGHT_NSID)
 
     state.progress = { done: 0, total: ops.length, label: 'Writing flights' }
     render()
@@ -283,20 +544,14 @@ async function doImport(): Promise<void> {
     })
 
     let trips = 0
-    if (state.includeTrips && state.trips.length) {
+    const groups = state.includeTrips ? selectedTrips() : []
+    if (groups.length) {
       // Trip records reference flights by AT-URI, so the flights must exist
       // first. Re-list to pick up the keys the server assigned.
       const written = indexBySourceId(await listAll(client, FLIGHT_NSID))
-      const chosenRows = new Set(chosen.map((f) => f.row))
       const createdAt = nowIso()
-      const tripRecords = state.trips
-        .map((t) =>
-          buildTripRecord(
-            { ...t, flights: t.flights.filter((f) => chosenRows.has(f.row)) },
-            (f) => written.get(`flighty ${f.record.sourceId}`)?.uri,
-            createdAt,
-          ),
-        )
+      const tripRecords = groups
+        .map((t) => buildTripRecord(t, (f) => written.get(`flighty ${effective(f).sourceId}`)?.uri, createdAt))
         .filter((t): t is NonNullable<typeof t> => Boolean(t))
 
       if (tripRecords.length) {
