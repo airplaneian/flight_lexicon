@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contrail: how the importer works</title>
+    <meta name="description" content="How the Flighty importer maps a CSV export to Contrail records: column mapping, timezone resolution, trip grouping and idempotent writes." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9992;&#65039;</text></svg>" />
+  </head>
+  <body>
+    <!--NAV-->
+
+    <header class="masthead">
+      <h1>How the importer works</h1>
+      <p class="tagline">
+        Notes on the <a href="/import/">Flighty importer</a>, for anyone building their own tool
+        that writes Contrail records. This describes one implementation, not a specification.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Shape</h2>
+        <p>
+          Everything runs in the browser. There is no backend, so the CSV is never uploaded and
+          there is nowhere for it to be stored. Sign-in is atproto OAuth using a client metadata
+          document served from this domain, and the library holds DPoP-bound tokens in IndexedDB.
+        </p>
+        <p>The importer requests three scopes and no others.</p>
+        <pre><code>atproto
+repo:com.airplaneian.contrail.temp.flight?action=create&amp;action=update
+repo:com.airplaneian.contrail.temp.trip?action=create&amp;action=update</code></pre>
+        <p>
+          Create and update on two collections. It cannot delete, and it cannot touch anything
+          outside those collections.
+        </p>
+      </section>
+
+      <section>
+        <h2>Column mapping</h2>
+        <p>A Flighty export has 33 columns. These are the ones that become record fields.</p>
+        <table class="keys">
+          <thead>
+            <tr><th scope="col">CSV column</th><th scope="col">Record field</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Date</th><td><code>date</code></td></tr>
+            <tr><th scope="row">Airline</th><td><code>operator</code>, already an ICAO designator</td></tr>
+            <tr><th scope="row">Flight</th><td><code>flightNumber</code></td></tr>
+            <tr><th scope="row">From, To</th><td><code>origin</code>, <code>destination</code></td></tr>
+            <tr><th scope="row">Dep/Arr Terminal, Gate</th><td><code>terminal</code>, <code>gate</code> on each place</td></tr>
+            <tr><th scope="row">Canceled, Diverted To</th><td><code>status</code>, <code>diversionAirport</code></td></tr>
+            <tr><th scope="row">Eight time columns</th><td>the out, off, on and in timestamps</td></tr>
+            <tr><th scope="row">Aircraft Type Name</th><td><code>aircraftType</code></td></tr>
+            <tr><th scope="row">Tail Number</th><td><code>registration</code></td></tr>
+            <tr><th scope="row">Seat, Cabin Class, Notes</th><td><code>seat</code>, <code>cabin</code>, <code>notes</code></td></tr>
+            <tr><th scope="row">Flight Flighty ID</th><td><code>sourceId</code></td></tr>
+            <tr><th scope="row">PNR</th><td>trip grouping only, never written</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Seat Type and Flight Reason have no field to map to. The Flighty identifiers for
+          airline, airport and aircraft type name entities the schema does not model, so only the
+          flight identifier is used. <code>source</code> is set to <code>flighty</code> and
+          <code>relationship</code> to <code>passenger</code>, since an export describes flights the
+          account holder was on.
+        </p>
+      </section>
+
+      <section>
+        <h2>Times</h2>
+        <p>
+          This is the most involved part of the import. The time columns carry no offset, so the
+          importer reads departure times as local to the origin and arrival times as local to the
+          destination. The lexicon requires an explicit offset, so each one has to be resolved
+          against the timezone that airport was using on that date.
+        </p>
+        <p>
+          The importer ships an IATA to IANA zone table generated from
+          <a href="https://github.com/mborsetti/airportsdata">airportsdata</a>. It does not ship a
+          timezone database. The browser already has one with full historical rules, reachable
+          through <code>Intl.DateTimeFormat</code>, so only the airport mapping is needed.
+        </p>
+        <p>
+          Resolving a wall time is not a single lookup. The importer collects the offsets the zone
+          used a day either side, keeps those that read back as the same wall time, and classifies
+          the result. One match is unique. Two means a repeated hour at a daylight saving fall-back,
+          and the earlier instant is used. None means an hour skipped at spring forward. Both edge
+          cases are surfaced in the preview rather than silently resolved.
+        </p>
+      </section>
+
+      <section>
+        <h2>Known bad data</h2>
+        <p>
+          Rows may carry a wrong landing time, which appears to affect older ones. Where it
+          happens, the value in <code>Landing (Actual)</code> is the scheduled gate departure
+          re-expressed in the arrival airport's local time. Compared as instants the two are exactly equal, so the check is an
+          equality test rather than a heuristic, and the importer drops the value when it matches.
+        </p>
+        <p>
+          A flight number may be malformed. The importer checks each one against a plausible shape
+          and flags it rather than correcting it, since a bad value is still what the source said.
+        </p>
+      </section>
+
+      <section>
+        <h2>Airport codes</h2>
+        <p>
+          The same table carries ICAO location indicators and FAA Location Identifiers, so the
+          importer fills those alongside the IATA code the export supplies. Two things are worth
+          knowing if you use that dataset.
+        </p>
+        <p>
+          It repeats the FAA LID in its <code>icao</code> column for US fields that have no ICAO
+          indicator, so passing that column straight through publishes a wrong code. Comparing the
+          two columns identifies them. Separately, most FAA LIDs are the same string as the IATA
+          code, so the importer writes that field only where it differs.
+        </p>
+      </section>
+
+      <section>
+        <h2>Trips</h2>
+        <p>
+          Flighty has no trip concept, but legs booked together may share a booking reference, and
+          the importer groups on it. Matching is case-insensitive, since the same reference can
+          appear in more than one case.
+        </p>
+        <p>
+          The reference itself is never written to a record. A booking reference is six alphanumeric
+          characters, a keyspace small enough that publishing a hash of one publishes the reference.
+          The trip uses the first leg's Flighty identifier as its <code>sourceId</code> instead,
+          which is already public as that flight's own <code>sourceId</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Writing without duplicating</h2>
+        <p>
+          Records are matched on <code>source</code> and <code>sourceId</code> in the record body
+          rather than on the record key. Keys are opaque TIDs, so correcting a flight number updates
+          the existing record instead of minting a new one. Deriving a key from content would do the
+          opposite.
+        </p>
+        <p>
+          The sequence is <code>listRecords</code> over the collection, index by source and source
+          identifier, then <code>applyWrites</code> in batches of 100 with a create or an update per
+          row. Trips go in a second pass, after re-listing flights to pick up the keys the server
+          assigned.
+        </p>
+        <p>
+          On update, any field the importer does not own is carried through untouched, so sidecar
+          data and fields from a newer version of the schema survive. <code>createdAt</code> is kept
+          from the original record, since it records when the record was first written.
+        </p>
+      </section>
+    </main>
+
+    <!--FOOTER-->
+  </body>
+</html>

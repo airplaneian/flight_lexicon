@@ -57,7 +57,6 @@ footer {
 }
 
 .topnav-mark {
-  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -71,7 +70,6 @@ footer {
 }
 
 .topnav-link {
-  font-size: 0.8125rem;
   color: var(--muted);
   border-bottom: 0;
 }
@@ -260,6 +258,15 @@ figcaption {
   border-bottom: 1px solid var(--border);
   vertical-align: top;
   color: var(--prose);
+}
+
+.keys thead th {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding-bottom: 0.5rem;
 }
 
 .keys th {
@@ -503,6 +510,12 @@ figcaption {
 /* ── Importer ── */
 
 #app {
+  margin-bottom: 3rem;
+}
+
+/* On the importer page the tool leads and the explanation follows, so the
+   warning needs air above it rather than below the prose. */
+.warning {
   margin-top: 2rem;
 }
 

@@ -4,7 +4,7 @@
 
 import Papa from 'papaparse'
 import { FLIGHT_NSID, prune, type FlightRecord, type Place } from './lexicon.ts'
-import { resolveLocal, zoneForIata, type Resolution } from './timezone.ts'
+import { resolveLocal, zoneForIata, codesForIata, type Resolution } from './timezone.ts'
 
 export const SOURCE = 'flighty'
 
@@ -54,7 +54,13 @@ function normaliseRegistration(raw: string): string {
 }
 
 function place(iata: string, terminal: string, gate: string): Place | undefined {
-  const p = prune({ iata: iata.toUpperCase(), terminal, gate })
+  const code = iata.toUpperCase()
+  const { icao, faaLid } = code ? codesForIata(code) : {}
+  // An FAA LID identical to the IATA code is the same string in a second field.
+  // Write it only where it differs, which is where it is the airport's own
+  // identifier rather than a restatement of one already present.
+  const lid = faaLid === code ? undefined : faaLid
+  const p = prune({ icao, iata: code, faaLid: lid, terminal, gate })
   return Object.keys(p).length ? p : undefined
 }
 
@@ -125,6 +131,7 @@ function transformRow(row: Record<string, string>, rowNumber: number, createdAt:
     registration: normaliseRegistration(clean(row['Tail Number'])) || undefined,
     aircraftType: clean(row['Aircraft Type Name']) || undefined,
     seat: clean(row['Seat']) || undefined,
+    notes: clean(row['Notes']) || undefined,
     cabin: normaliseCabin(clean(row['Cabin Class'])),
     // Flighty records the author's own flights, so a relationship is claimed.
     relationship: 'passenger',

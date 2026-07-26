@@ -49,7 +49,7 @@
           },
           "callsign": {
             "type": "string",
-            "description": "The flight identification the aircraft transmitted, uppercase, verbatim. Never decompose it: populate 'operator' and 'flightNumber' as well only when the split is unambiguous.",
+            "description": "The flight identification the aircraft broadcast, uppercase and exactly as transmitted. Holds the whole callsign, never a fragment of one. May be an operator designator followed by a flight number, a registration, or a string with no internal structure.",
             "maxLength": 16
           },
           "operator": {
@@ -89,12 +89,12 @@
           },
           "aircraftType": {
             "type": "string",
-            "description": "Free-text aircraft type as the source expressed it, for example 'Boeing 737-800'. Not reliable for matching. Do not derive it from 'icaoTypeDesignator' or the reverse.",
+            "description": "Free-text aircraft type as the source expressed it, for example 'Boeing 737-800'. Not normalised and not reliable for matching. Several distinct ICAO designators can share one marketing name.",
             "maxLength": 128
           },
           "icaoTypeDesignator": {
             "type": "string",
-            "description": "ICAO aircraft type designator, for example 'B77W'. Write it only when the source supplies a designator.",
+            "description": "ICAO aircraft type designator, for example 'B77W'.",
             "maxLength": 8
           },
           "icao24": {
@@ -144,7 +144,7 @@
           },
           "relationship": {
             "type": "string",
-            "description": "The author's connection to this flight. Absent means no claim is being made, unlike every other field where absent means unknown. Open string: readers must tolerate values outside the known list.",
+            "description": "The author's connection to this flight. Absent means no claim is being made, unlike every other field where absent means unknown. An open string: the known values are not exhaustive.",
             "knownValues": [
               "passenger",
               "pic",
@@ -163,7 +163,7 @@
           },
           "cabin": {
             "type": "string",
-            "description": "Cabin or class of service. Open string, lower camel case; readers must tolerate values outside the known list.",
+            "description": "Cabin or class of service. An open string in lower camel case; the known values are not exhaustive.",
             "knownValues": [
               "economy",
               "premiumEconomy",

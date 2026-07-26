@@ -62,9 +62,24 @@ function offsetAt(epochMs: number, timeZone: string): number {
   return (wallClockAt(epochMs, timeZone) - epochMs) / 60_000
 }
 
+type Entry = [zone: number, icao: string, faaLid: string]
+const table = airports.iata as unknown as Record<string, Entry>
+
 export function zoneForIata(iata: string): string | undefined {
-  const i = (airports.iata as Record<string, number>)[iata.toUpperCase()]
-  return i === undefined ? undefined : airports.zones[i]
+  const entry = table[iata.toUpperCase()]
+  return entry ? airports.zones[entry[0]] : undefined
+}
+
+/** The ICAO indicator and FAA LID for an IATA code, where the airport has them.
+ *  Empty strings mean the airport has no such identifier, not that it is
+ *  unknown, and are dropped rather than written. */
+export function codesForIata(iata: string): { icao?: string; faaLid?: string } {
+  const entry = table[iata.toUpperCase()]
+  if (!entry) return {}
+  const out: { icao?: string; faaLid?: string } = {}
+  if (entry[1]) out.icao = entry[1]
+  if (entry[2]) out.faaLid = entry[2]
+  return out
 }
 
 export function formatOffset(minutes: number): string {

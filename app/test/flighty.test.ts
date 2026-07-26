@@ -38,8 +38,8 @@ test('maps a complete row, giving every time an explicit offset', () => {
   assert.equal(f.record.date, '2025-07-13')
   assert.equal(f.record.operator, 'VIR')
   assert.equal(f.record.flightNumber, '20', 'flight number stays a string')
-  assert.deepEqual(f.record.origin, { iata: 'SFO', terminal: 'INTL', gate: 'A2' })
-  assert.deepEqual(f.record.destination, { iata: 'LHR', terminal: '3' }, 'no empty gate key')
+  assert.deepEqual(f.record.origin, { icao: 'KSFO', iata: 'SFO', terminal: 'INTL', gate: 'A2' })
+  assert.deepEqual(f.record.destination, { icao: 'EGLL', iata: 'LHR', terminal: '3' }, 'no empty gate key')
   // Departure in origin-local, arrival in destination-local.
   assert.equal(f.record.actualGateDeparture, '2025-07-13T15:57:00-07:00')
   assert.equal(f.record.actualGateArrival, '2025-07-14T10:23:00+01:00')
@@ -115,7 +115,7 @@ test('flags an airport it has no timezone for, and omits its times', () => {
   assert.equal(f.issues.filter((i) => i.kind === 'unknown-airport').length, 1)
   assert.equal(f.record.actualGateDeparture, '2025-07-13T09:00:00-07:00', 'known side still resolved')
   assert.equal(f.record.actualGateArrival, undefined, 'unknown side omitted rather than guessed')
-  assert.deepEqual(f.record.destination, { iata: 'ZZZ' }, 'the code itself is still recorded')
+  assert.deepEqual(f.record.destination, { iata: 'ZZZ' }, 'unknown airport keeps its code and gains nothing')
 })
 
 test('omits absent values entirely rather than writing empties', () => {
@@ -126,4 +126,42 @@ test('omits absent values entirely rather than writing empties', () => {
   for (const key of ['seat', 'cabin', 'registration', 'aircraftType', 'notes', 'marketingAirline']) {
     assert.ok(!(key in f.record), `${key} should be absent, not empty`)
   }
+})
+
+test('fills the ICAO indicator and FAA LID an airport actually has', async () => {
+  const { codesForIata } = await import('../src/timezone.ts')
+  assert.deepEqual(codesForIata('SFO'), { icao: 'KSFO', faaLid: 'SFO' })
+  assert.deepEqual(codesForIata('LHR'), { icao: 'EGLL' }, 'no FAA LID outside the US')
+  assert.deepEqual(codesForIata('ZZZ'), {}, 'unknown code yields nothing')
+})
+
+test('never writes an FAA LID into the icao field', async () => {
+  // The source dataset repeats the LID in its icao column for US fields with no
+  // ICAO indicator. Writing that would publish a wrong code.
+  const { codesForIata } = await import('../src/timezone.ts')
+  for (const code of ['OCA', 'CYT', 'FWL', 'CSE', 'CUS', 'JCY']) {
+    const { icao, faaLid } = codesForIata(code)
+    assert.equal(icao, undefined, `${code} has no ICAO indicator, so icao must be absent`)
+    assert.ok(faaLid, `${code} should still carry its FAA LID`)
+  }
+})
+
+test('omits an FAA LID that merely repeats the IATA code', () => {
+  const [f] = parseFlightyCsv(csv({
+    'Date': '2025-07-13', 'Airline': 'UAL', 'Flight': '1', 'From': 'SFO', 'To': 'LAX',
+    'Canceled': 'false', 'Flight Flighty ID': 'g1',
+  }))
+  assert.deepEqual(f.record.origin, { icao: 'KSFO', iata: 'SFO' }, 'faaLid SFO adds nothing')
+  assert.deepEqual(f.record.destination, { icao: 'KLAX', iata: 'LAX' })
+})
+
+test('carries the Notes column through to the record', () => {
+  const [with_, without] = parseFlightyCsv(csv(
+    { 'Date': '2025-07-13', 'Airline': 'UAL', 'Flight': '1', 'From': 'SFO', 'To': 'LAX',
+      'Canceled': 'false', 'Notes': 'Upgraded at the gate.', 'Flight Flighty ID': 'h1' },
+    { 'Date': '2025-07-14', 'Airline': 'UAL', 'Flight': '2', 'From': 'LAX', 'To': 'SFO',
+      'Canceled': 'false', 'Flight Flighty ID': 'h2' },
+  ))
+  assert.equal(with_.record.notes, 'Upgraded at the gate.')
+  assert.ok(!('notes' in without.record), 'an empty Notes column writes nothing')
 })

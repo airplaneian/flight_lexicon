@@ -11,6 +11,7 @@ export default defineConfig({
         home: resolve(__dirname, 'index.html'),
         docs: resolve(__dirname, 'docs/index.html'),
         importer: resolve(__dirname, 'import/index.html'),
+        importerDocs: resolve(__dirname, 'import/docs/index.html'),
       },
     },
   },

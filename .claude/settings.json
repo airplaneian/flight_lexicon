@@ -62,7 +62,12 @@
       "Bash(node /private/tmp/claude-501/-Users-iservin-Documents-flight-lexicon/741c8f8b-8b91-4a36-bfcf-dfdc5c9f915f/scratchpad/repro.mjs /private/tmp/claude-501/-Users-iservin-Documents-flight-lexicon/741c8f8b-8b91-4a36-bfcf-dfdc5c9f915f/scratchpad)",
       "Bash(cp src/repo.ts /tmp/repo.bak)",
       "Bash(sed -i '' 's|`${source}\\\\\\\\u0000${sourceId}`|`${source} ${sourceId}`|' src/repo.ts)",
-      "Bash(cp /tmp/repo.bak src/repo.ts)"
+      "Bash(cp /tmp/repo.bak src/repo.ts)",
+      "Bash(curl -s -o /dev/null -w \"dev server: %{http_code}\\\\n\" http://127.0.0.1:5173/)",
+      "Bash(awk '/<h2>Working with surveillance data<\\\\/h2>/,/<\\\\/section>/' docs/index.html)",
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(grep -oiE \"\\(flighty|export|exports|rows|columns\\)[^.<]{0,60}\\(carry|contain|are|is|has|write|share\\)[^.<]{0,50}\" import/docs/index.html)",
+      "Bash(pkill -f \"grep -oiE\")"
     ]
   }
 }

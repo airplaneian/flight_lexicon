@@ -1,6 +1,6 @@
 {
   "client_id": "https://contrail.airplaneian.com/client-metadata.json",
-  "client_name": "Contrail",
+  "client_name": "Contrail Flighty importer",
   "client_uri": "https://contrail.airplaneian.com",
   "redirect_uris": [
     "https://contrail.airplaneian.com/import/"

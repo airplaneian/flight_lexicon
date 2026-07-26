@@ -24,38 +24,20 @@
         <a href="/docs/">documentation</a>, or try the
         <a href="/import/">Flighty importer demo</a>.
       </p>
+      <p class="notice">
+          Heads up:Contrail is very much in alpha. The lexicons are published under a <code>temp</code> namespace while
+          the shape settles. I would love your feedback, please reach out to me <a href="https://bsky.app/profile/airplaneian.com">@airplaneian.com</a>.
+        </p>
     </header>
 
     <main>
       <section>
         <h2>Introduction</h2>
         <p>
-          Contrail is a proposal to provide lexicons to describe flight segments. A contrail record
-          merely asserts that a particular flight existed, additional optional fields exist to
-          provide context. For instance, a user's connection to a particular flight (i.e. as a
-          passenger or pilot) is entirely optional. In fact, the only mandatory field required is
-          <code>createdAt</code>. This is the most important property of the schema and everything
-          else follows from it.
-        </p>
-        <p>
-          An absent field means the value is unknown or does not apply. It never means zero, empty,
-          or none, and the schema defines no placeholder values. A record describing a flight where
-          only the date and the tail number are known is as valid as one with every field
-          populated. Tools that require complete data should enforce that requirement themselves,
-          since the schema cannot do so without excluding general aviation, where most of the
-          commercial fields have no meaning.
-        </p>
-        <p>
-          The <code>relationship</code> field is the one exception to this rule. When it is absent,
-          no claim is being made about the author's involvement, rather than the claim being
-          unknown. A record created from ADS-B data about another operator's aircraft simply omits
-          it.
-        </p>
-        <p class="notice">
-          Contrail is in alpha. The lexicons are published under a <code>temp</code> namespace while
-          the shape settles, so field names and constraints can still change. Feedback is welcome,
-          and the best place for it is Bluesky at
-          <a href="https://bsky.app/profile/airplaneian.com">@airplaneian.com</a>.
+          One of the fundamental aspects of aviation is the concept of a "flight" and by providing a standardized taxonomy to describe flight segments, Contrail defines
+          a structure to build aviation webapps using AT Protocol. I built Contrail primarily as a way to explore ATProto, but I also believe these lexicons can provide
+          real value to the aviation community. At its core, a Contrail record just asserts that a particular flight existed, many additional (optional) fields serve to
+          add context, ideally in a way that can holistically describe most aspects of a given flight.
         </p>
       </section>
 
@@ -69,20 +51,10 @@
           and resolve by NSID.
         </p>
         <!--LEXICON_DEFINITIONS-->
-        <p class="aside">
-          These are currently published under a <code>temp</code> namespace while the shape
-          settles. Published lexicon constraints can never be loosened afterwards, so the stable
-          names will not be claimed until real data has been through them.
-        </p>
       </section>
     </main>
 
-    <footer>
-      <p>
-        Contrail is a proposal. The lexicons are the substance of it, and the importer exists to
-        demonstrate that the schema works and to give people a reason to write records with it.
-      </p>
-    </footer>
+    <!--FOOTER-->
 
   </body>
 </html>

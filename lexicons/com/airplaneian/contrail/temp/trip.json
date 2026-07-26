@@ -25,7 +25,7 @@
           },
           "flights": {
             "type": "array",
-            "description": "The flights in this trip, in the order flown, as AT-URIs to flight records. Plain AT-URIs rather than strong references, since flight records are corrected in place. References may dangle; readers must tolerate that.",
+            "description": "The flights in this trip, in the order flown, as AT-URIs to flight records. Plain AT-URIs rather than strong references, so a reference stays valid when a flight record is corrected in place. A reference may dangle if a flight is later deleted.",
             "items": {
               "type": "string",
               "format": "at-uri"

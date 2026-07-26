@@ -1,4 +1,4 @@
-// Generates src/generated/airports.json: an IATA -> IANA timezone lookup.
+// Generates src/generated/airports.json: IATA -> timezone, ICAO indicator and FAA LID.
 //
 // Flighty exports naked local timestamps with no UTC offset, and the lexicon
 // requires explicit offsets. Resolving one to the other needs the timezone of
@@ -36,7 +36,11 @@ for (const row of data) {
     zones.push(row.tz)
     zoneIndex.set(row.tz, i)
   }
-  iata[row.iata] = i
+  // For US fields with no ICAO indicator this dataset repeats the FAA LID in
+  // the icao column. Writing that into `icao` would publish a wrong code, so
+  // treat icao == lid as "no ICAO indicator".
+  const icao = row.icao && row.icao !== row.lid ? row.icao : ''
+  iata[row.iata] = [i, icao, row.lid ?? '']
 }
 
 const payload = { source: SOURCE, license: 'MIT', zones, iata }
@@ -44,6 +48,9 @@ await mkdir(dirname(out), { recursive: true })
 await writeFile(out, JSON.stringify(payload))
 
 const bytes = JSON.stringify(payload).length
+const withIcao = Object.values(iata).filter(([, c]) => c).length
+const withLid = Object.values(iata).filter(([, , l]) => l).length
 console.log(
-  `wrote ${Object.keys(iata).length} airports, ${zones.length} zones, ${(bytes / 1024).toFixed(0)} KB`,
+  `wrote ${Object.keys(iata).length} airports (${withIcao} with ICAO, ${withLid} with FAA LID), ` +
+    `${zones.length} zones, ${(bytes / 1024).toFixed(0)} KB`,
 )

@@ -112,8 +112,9 @@ function signInForm(): Node {
     el('label', { for: 'handle' }, 'Sign in with your atproto handle'),
     el('div', { class: 'row' }, input, el('button', { type: 'submit' }, 'Sign in')),
     el('p', { class: 'aside' },
-      'Contrail asks for permission to create and update records in its two collections. ' +
-      'Nothing else. Not delete, not your posts, not your account.'),
+      'This demo asks for permission to create and update records in its two collections, and ' +
+      'nothing else. Be mindful of which flights you choose to publish: these records are ' +
+      'public, publishing a full flight history may compromise your personal opsec.'),
   )
   form.addEventListener('submit', async (e) => {
     e.preventDefault()

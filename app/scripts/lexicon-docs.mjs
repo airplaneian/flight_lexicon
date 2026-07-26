@@ -13,17 +13,20 @@ const LEXICONS = resolve(dirname(fileURLToPath(import.meta.url)), '../../lexicon
 const FILES = ['flight', 'trip', 'defs']
 const PLACEHOLDER = '<!--LEXICON_DEFINITIONS-->'
 const NAV_PLACEHOLDER = '<!--NAV-->'
+const FOOTER_PLACEHOLDER = '<!--FOOTER-->'
+const FOOTER = '<footer><p>An airplaneian joint.</p></footer>'
 
 const NAV_LINKS = [
   { href: '/', label: 'Contrail', mark: true },
-  { href: '/docs/', label: 'Documentation' },
-  { href: '/import/', label: 'Importer demo' },
+  { href: '/docs/', label: 'Docs' },
+  { href: '/import/', label: 'Demo' },
 ]
 
 /** One nav, injected into every page, so three copies cannot drift apart. */
 function renderNav(pathname) {
   const link = ({ href, label, mark }) => {
-    const current = href === pathname ? ' aria-current="page"' : ''
+    const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
+    const current = active ? ' aria-current="page"' : ''
     return `<a href="${href}" class="${mark ? 'topnav-mark' : 'topnav-link'}"${current}>${label}</a>`
   }
   const [mark, ...rest] = NAV_LINKS
@@ -154,6 +157,7 @@ export function lexiconDocs() {
         // ctx.path is '/index.html', '/docs/index.html', etc.
         const pathname = (ctx?.path ?? '/index.html').replace(/index\.html$/, '')
         html = html.replace(NAV_PLACEHOLDER, renderNav(pathname))
+        html = html.replace(FOOTER_PLACEHOLDER, FOOTER)
         if (!html.includes(PLACEHOLDER)) return html
 
         const docs = FILES.map((f) => JSON.parse(readFileSync(`${LEXICONS}/${f}.json`, 'utf8')))

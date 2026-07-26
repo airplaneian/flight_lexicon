@@ -4,7 +4,7 @@
   "defs": {
     "place": {
       "type": "object",
-      "description": "An airport, airfield, or landing site referenced by a flight record. Every field is optional, and absent means unknown or not applicable. Write the identifier fields wherever they are known, since readers match on them, and prefer 'icao' where a place has one. Never invent or derive an identifier the source did not supply.",
+      "description": "An airport, airfield, or landing site referenced by a flight record. Every field is optional, and absent means unknown or not applicable. The identifier fields come from different systems and a place may have any combination of them, so write each one the place actually has. A place with no published identifier is described by 'name' and 'geo' alone.",
       "properties": {
         "icao": {
           "type": "string",
