@@ -7,22 +7,23 @@
 }
 
 :root {
-  --bg: #0a0a0a;
-  --surface: #141414;
-  --surface-h: #1c1c1c;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-h: rgba(255, 255, 255, 0.25);
-  --text: #ffffff;
-  --muted: rgba(255, 255, 255, 0.4);
-  --accent: #f97316;
-  --accent-h: #fb923c;
-  /* Contrail is long-form where Easy ADS-B is not, so body copy sits just
-     below full white. Everything else matches. */
-  --prose: rgba(255, 255, 255, 0.82);
-  /* Secondary prose: dimmer than body, still readable at paragraph length. */
-  --prose-dim: rgba(255, 255, 255, 0.66);
+  --bg: #ffffff;
+  --surface: #f7f7f6;
+  --surface-h: #f0f0ee;
+  --border: rgba(0, 0, 0, 0.12);
+  --border-h: rgba(0, 0, 0, 0.32);
+  --text: #101010;
+  --muted: rgba(0, 0, 0, 0.48);
+  --accent: #d80000;
+  /* Hover darkens rather than lightens, since the page is light. */
+  --accent-h: #a30000;
+  /* Body copy sits just below full black, so long passages are easier on the
+     eye than pure #000 would be. */
+  --prose: rgba(0, 0, 0, 0.84);
+  /* Secondary prose: lighter than body, still readable at paragraph length. */
+  --prose-dim: rgba(0, 0, 0, 0.64);
   --measure: 680px;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -148,7 +149,7 @@ p {
 a {
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid rgba(249, 115, 22, 0.35);
+  border-bottom: 1px solid rgba(216, 0, 0, 0.35);
   transition: color 0.12s, border-color 0.12s;
 }
 
@@ -165,7 +166,7 @@ strong {
 code {
   font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 0.875em;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
   padding: 0.1em 0.4em;
 }
@@ -329,8 +330,8 @@ figcaption {
 .lexdoc > input:nth-of-type(1):checked ~ .lexdoc-tabs label:nth-of-type(1),
 .lexdoc > input:nth-of-type(2):checked ~ .lexdoc-tabs label:nth-of-type(2),
 .lexdoc > input:nth-of-type(3):checked ~ .lexdoc-tabs label:nth-of-type(3) {
-  background: rgba(249, 115, 22, 0.08);
-  border-color: rgba(249, 115, 22, 0.35);
+  background: rgba(216, 0, 0, 0.08);
+  border-color: rgba(216, 0, 0, 0.35);
   color: var(--accent);
 }
 
@@ -427,13 +428,13 @@ figcaption {
 }
 
 .lextype {
-  background: rgba(125, 180, 220, 0.14);
-  color: #8ec2e6;
+  background: rgba(31, 111, 168, 0.10);
+  color: #1a5f92;
 }
 
 .lexreq {
-  background: rgba(239, 68, 68, 0.14);
-  color: #fca5a5;
+  background: rgba(185, 28, 28, 0.10);
+  color: #a51b1b;
 }
 
 .lexconstraints {
@@ -462,7 +463,7 @@ figcaption {
 
 .lexknown code {
   font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.06);
   color: var(--prose);
 }
 
@@ -481,12 +482,12 @@ figcaption {
 /* ── Warning ── */
 
 .warning {
-  background: rgba(249, 115, 22, 0.08);
-  border: 1px solid rgba(249, 115, 22, 0.25);
+  background: rgba(216, 0, 0, 0.08);
+  border: 1px solid rgba(216, 0, 0, 0.25);
   border-radius: 12px;
   padding: 1.25rem 1.375rem;
   margin-bottom: 2rem;
-  color: #fb923c;
+  color: var(--accent-h);
   font-size: 0.9rem;
 }
 
@@ -504,7 +505,7 @@ figcaption {
 }
 
 .warning code {
-  background: rgba(249, 115, 22, 0.15);
+  background: rgba(216, 0, 0, 0.15);
 }
 
 /* ── Importer ── */
@@ -639,7 +640,7 @@ input[type='text']::placeholder {
 
 .dropzone.over {
   border-color: var(--accent);
-  background: rgba(249, 115, 22, 0.06);
+  background: rgba(216, 0, 0, 0.06);
 }
 
 .dropzone label {
@@ -798,7 +799,7 @@ input[type='checkbox'] {
 }
 
 .badge.edited {
-  border-color: rgba(249, 115, 22, 0.35);
+  border-color: rgba(216, 0, 0, 0.35);
   color: var(--accent);
 }
 
@@ -887,7 +888,7 @@ input[type='checkbox'] {
 
 .editor-time code {
   font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.045);
   color: var(--prose-dim);
 }
 
@@ -904,12 +905,12 @@ input[type='checkbox'] {
 }
 
 .error {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(185, 28, 28, 0.06);
+  border: 1px solid rgba(185, 28, 28, 0.28);
   border-radius: 12px;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  color: #fca5a5;
+  color: #a51b1b;
   font-size: 0.9rem;
 }
 
